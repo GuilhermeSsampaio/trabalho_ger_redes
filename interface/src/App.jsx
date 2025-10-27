@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import "./index.css";
+import "./App.css";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import TutorialCard from "./components/TutorialCard";
+import Footer from "./components/Footer";
 
 // YouTubeAPI pode ser opcional agora, pois você pode usar só as URLs
 // fazer as requisições pra api fastapi
@@ -137,153 +141,212 @@ function App() {
   };
 
   return (
-    <div className="container container-fluid mt-5 center">
-      <h1>Baixar músicas ou vídeos do YouTube</h1>
+    <>
+      <Navbar />
+      <Hero />
+      <TutorialCard />
 
-      <div className="mb-3">
-        <select
-          className="form-select mb-3"
-          value={activeTab}
-          onChange={(e) => setActiveTab(e.target.value)}
-        >
-          <option value="search">Pesquisar e Baixar</option>
-          <option value="urls">Baixar pelas URLs</option>
-        </select>
-      </div>
-
-      <div className="mb-3">
-        <label>Escolha o tipo de download:</label>
-        <select
-          className="form-select"
-          value={downloadType}
-          onChange={(e) => setDownloadType(e.target.value)}
-        >
-          <option value="audio">Somente Áudio</option>
-          <option value="video">Vídeo Completo</option>
-        </select>
-      </div>
-
-      {activeTab === "search" ? (
-        <>
-          <div className="input-group mb-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Pesquise por músicas"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button className="btn btn-primary" onClick={handleSearch}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="25"
-                fill="currentColor"
-                className="bi bi-search"
-                viewBox="0 0 16 16"
-              >
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="container">
-            <div className="row row-cols-1 row-cols-md-3 g-4">
-              {searchResults.map((item) => (
-                <div key={item.id.videoId} className="col">
-                  <div className="card-body bg-light p-1">
-                    <img
-                      src={item.snippet.thumbnails.default.url}
-                      alt={item.snippet.title}
-                      className="card-img-top"
-                    />
-                    <p className="card-title">{item.snippet.title}</p>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() =>
-                        addVideo(item.id.videoId, item.snippet.title)
-                      }
-                    >
-                      Adicionar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <h2 id="msg" className="mt-3">
-            {message}
-          </h2>
-
-          <ul className="list-group mb-3">
-            {Object.values(videoElements).map((video) => (
-              <li
-                key={video.id}
-                className="list-group-item d-flex justify-content-between align-items-center"
-              >
-                {video.title}
-                <button
-                  className="btn btn-danger"
-                  onClick={() => removeVideo(video.id)}
-                >
-                  Remover
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          {selectedVideos.length > 0 && (
-            <button
-              id="downloadAll"
-              className="btn btn-primary mt-3"
-              onClick={downloadAll}
-            >
-              Baixar Todos
-            </button>
-          )}
-        </>
-      ) : (
-        <>
-          <h1>Inserir uma lista de urls para baixar:</h1>
-          <textarea
-            className="form-control mb-3"
-            rows="10"
-            placeholder="Insira as URLs dos vídeos, uma por linha"
-            value={downloadUrls}
-            onChange={(e) => setDownloadUrls(e.target.value)}
-          ></textarea>
-          <button className="btn btn-primary mt-3" onClick={downloadFromUrls}>
-            Baixar Músicas
-          </button>
-        </>
-      )}
-
-      {isLoading && (
-        <div className="modal-overlay">
-          <div className="loading-modal">
-            <div className="lds-roller">
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-            </div>
-            <p className="mt-3 loading-text">
-              {downloadStatus || "Processando..."}
-            </p>
-          </div>
+      <div className="tutorial-title-wrap">
+        <h1 className="tutorial-title">
+          Baixar músicas ou vídeos do{" "}
+          <span className="tutorial-title-accent">YouTube</span>
+        </h1>
+        <div className="tutorial-subtitle">
+          Cole o link do vídeo e escolha o formato desejado
         </div>
-      )}
+      </div>
+      <div className="container container-fluid mt-5 mb-5 center">
+        <div className="card-download">
+          <div className="mb-4">
+            <label className="mb-1">Escolha entre pesquisar ou buscar por URLs:</label>
+            <select
+              className="form-select"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+            >
+              <option value="search">Pesquisar e Baixar</option>
+              <option value="urls">Baixar pelas URLs</option>
+            </select>
+          </div>
 
-      {!isLoading && downloadStatus && (
-        <div className="alert alert-success mt-3">{downloadStatus}</div>
-      )}
-    </div>
+          <div className="mb-4">
+            <label className="mb-1">Escolha o tipo de download:</label>
+            <select
+              className="form-select"
+              value={downloadType}
+              onChange={(e) => setDownloadType(e.target.value)}
+            >
+              <option value="audio">Somente Áudio</option>
+              <option value="video">Vídeo Completo</option>
+            </select>
+          </div>
+
+          {activeTab === "search" ? (
+            <>
+              <div className="input-group mb-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Pesquise por músicas"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSearch}
+                  style={{ border: "none", height: "50px" }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    className="bi bi-search"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="container">
+                <div className="row row-cols-1 row-cols-md-3 g-4">
+                  {searchResults.map((item) => (
+                    <div key={item.id.videoId} className="col">
+                      <div className="card-body bg-light p-1">
+                        <img
+                          src={item.snippet.thumbnails.default.url}
+                          alt={item.snippet.title}
+                          className="card-img-top"
+                        />
+                        <p className="card-title">{item.snippet.title}</p>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() =>
+                            addVideo(item.id.videoId, item.snippet.title)
+                          }
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="empty-state text-center mt-3 mb-4">
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    margin: "0 auto",
+                    borderRadius: "50%",
+                    background: "#2b2b2b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i className="bi bi-download" style={{fontSize: "36px"}}></i>
+                </div>
+                <h2
+                  id="msg"
+                  className="mt-3"
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    margin: "12px 0 4px",
+                  }}
+                >
+                  {message}
+                </h2>
+              </div>
+
+              <ul className="list-group mb-3">
+                {Object.values(videoElements).map((video) => (
+                  <li
+                    key={video.id}
+                    className="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    {video.title}
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => removeVideo(video.id)}
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              {selectedVideos.length > 0 && (
+                <button
+                  id="downloadAll"
+                  className="btn btn-primary mt-3"
+                  onClick={downloadAll}
+                >
+                  Baixar Todos
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <h5>Inserir uma lista de urls para baixar:</h5>
+              <textarea
+                className="form-control mb-3"
+                rows="10"
+                placeholder="Insira as URLs dos vídeos, uma por linha"
+                value={downloadUrls}
+                onChange={(e) => setDownloadUrls(e.target.value)}
+              ></textarea>
+              <div className="d-flex justify-content-center">
+                <button
+                  className="btn btn-primary btn-sm mt-3"
+                  onClick={downloadFromUrls}
+                  style={{
+                    border: "none",
+                    padding: "12px 12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "500",
+                    minWidth: 350,
+                  }}
+                >
+                  Baixar Músicas
+                </button>
+              </div>
+            </>
+          )}
+
+          {isLoading && (
+            <div className="modal-overlay">
+              <div className="loading-modal">
+                <div className="lds-roller">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+                <p className="mt-3 loading-text">
+                  {downloadStatus || "Processando..."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && downloadStatus && (
+            <div className="alert alert-success mt-3">{downloadStatus}</div>
+          )}
+        </div>
+      </div>
+
+      <Footer />
+    </>
   );
 }
 

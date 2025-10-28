@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -24,6 +24,24 @@ function App() {
 
   const { downloadVideos, downloadVideo, downloadMusic, downloadVideosZip } =
     useAPI();
+
+  const statusTimeoutRef = useRef(null);
+
+  // helper para mostrar uma mensagem temporária
+  const showStatus = (msg, duration = 5000) => {
+    setDownloadStatus(msg);
+    if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+    statusTimeoutRef.current = setTimeout(() => {
+      setDownloadStatus(null);
+      statusTimeoutRef.current = null;
+    }, duration);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+    };
+  }, []);
 
   // === PESQUISA NO YOUTUBE ===
   const handleSearch = async () => {
@@ -78,8 +96,8 @@ function App() {
     setIsLoading(true);
     setDownloadStatus("Iniciando download...");
 
+    let result = null;
     try {
-      let result;
       if (urls.length === 1) {
         const url = urls[0];
         result =
@@ -90,22 +108,28 @@ function App() {
         result = await downloadVideos(urls);
       }
 
-      if (result.error) {
+      if (result?.error) {
         alert(`Erro: ${result.message}`);
+        showStatus(result.message || "Erro no download.", 5000);
       } else {
-        setDownloadStatus(result.message || "Download iniciado com sucesso!");
+        // mostra mensagem final por alguns segundos
+        showStatus(result?.message || "Download iniciado com sucesso!", 5000);
 
         // Se vier um caminho ZIP, abre o link automaticamente
-        if (result.zip_path) {
+        if (result?.zip_path) {
           window.open(result.zip_path, "_blank");
         }
       }
     } catch (error) {
       console.error("Erro ao baixar vídeos:", error);
       alert("Ocorreu um erro ao processar o download.");
+      result = { error: true, message: error.message || "Erro desconhecido" };
+      showStatus(result.message, 5000);
     } finally {
       setIsLoading(false);
     }
+
+    return result;
   };
 
   // const downloadAll = () => handleDownload(selectedVideos);
@@ -147,12 +171,48 @@ function App() {
       a.download = "musicas.zip";
       a.click();
       window.URL.revokeObjectURL(url);
-      setDownloadStatus("Arquivo ZIP baixado com sucesso!");
+      // usar showStatus para sumir depois de alguns segundos
+      showStatus("Arquivo ZIP baixado com sucesso!", 5000);
     } catch (error) {
       console.error("Erro ao baixar ZIP:", error);
       alert("Erro ao baixar o arquivo ZIP.");
+      showStatus("Erro ao baixar o arquivo ZIP.", 5000);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // utilitário simples para converter duração ISO (se vier) para algo legível
+  const formatDuration = (iso) => {
+    if (!iso) return "";
+    try {
+      // transforma PT#H#M#S em H:MM:SS ou M:SS (simples)
+      const parts = iso.replace("PT", "").match(/(\d+H)?(\d+M)?(\d+S)?/);
+      if (!parts) return "";
+      const h = parts[1] ? parts[1].replace("H", "") : null;
+      const m = parts[2] ? parts[2].replace("M", "") : null;
+      const s = parts[3] ? parts[3].replace("S", "") : null;
+      const nums = [h, m, s].filter(Boolean).map(Number);
+      if (nums.length === 0) return "";
+      if (nums.length === 1) return `${nums[0]}`;
+      if (nums.length === 2)
+        return `${nums[0]}:${String(nums[1]).padStart(2, "0")}`;
+      return `${nums[0]}:${String(nums[1]).padStart(2, "0")}:${String(nums[2]).padStart(
+        2,
+        "0"
+      )}`;
+    } catch {
+      return "";
+    }
+  };
+
+  // nova função: adiciona e inicia download, atualiza mensagem quando finalizado
+  const addAndDownload = async (videoId, title) => {
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+    addVideo(videoId, title);
+    const res = await handleDownload([url]);
+    if (res && !res.error) {
+      showStatus("Download executado com sucesso e finalizado!", 5000);
     }
   };
 
@@ -224,33 +284,87 @@ function App() {
               </div>
 
               {/* Resultados da busca */}
-              <div className="container">
+              <div className="container mb-5">
                 <div className="row row-cols-1 row-cols-md-3 g-4">
-                  {searchResults.map((item) => (
-                    <div key={item.id.videoId} className="col">
-                      <div className="card-body bg-light p-1">
-                        <img
-                          src={item.snippet.thumbnails.default.url}
-                          alt={item.snippet.title}
-                          className="card-img-top"
-                        />
-                        <p className="card-title">{item.snippet.title}</p>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() =>
-                            addVideo(item.id.videoId, item.snippet.title)
-                          }
-                        >
-                          Adicionar
-                        </button>
+                  {searchResults.map((item) => {
+                    const videoId = item.id?.videoId || item.id;
+                    const thumb =
+                      item.snippet?.thumbnails?.high?.url ||
+                      item.snippet?.thumbnails?.default?.url;
+                    const duration = item.contentDetails?.duration
+                      ? formatDuration(item.contentDetails.duration)
+                      : "";
+                    return (
+                      <div key={videoId} className="col-music">
+                        <div className="yt-col">
+                          <div className="yt-card w-100">
+                            <div className="yt-thumb-wrap">
+                              <img
+                                src={thumb}
+                                alt={item.snippet?.title}
+                                className="yt-thumb"
+                              />
+                              {duration && (
+                                <div className="duration-badge">{duration}</div>
+                              )}
+                            </div>
+
+                            <div
+                              className="card-title-yt"
+                              title={item.snippet?.title}
+                            >
+                              {item.snippet?.title}
+                            </div>
+
+                            <div className="channel-row">
+                              <span>{item.snippet?.channelTitle}</span>
+                              <span>•</span>
+                              {/* caso queira mostrar visualizações reais, é necessário chamar outro endpoint; aqui mostramos placeholder discreto */}
+                              <span>
+                                {Math.floor(Math.random() * 10) + 1}M
+                              </span>
+                            </div>
+
+                            <div className="card-actions mt-5">
+                              <button
+                                className="add-btn"
+                                onClick={() => addVideo(videoId, item.snippet?.title)}
+                              >
+                                + Adicionar
+                              </button>
+
+                              <button
+                                className="icon-btn"
+                                title="Adicionar e baixar"
+                                onClick={() => addAndDownload(videoId, item.snippet?.title)}
+                              >
+                                <i className="bi bi-download" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Lista de vídeos selecionados */}
-              <div className="empty-state text-center mt-3 mb-4">
+              <div className="empty-state text-center mt-4 mb-4">
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    margin: "0 auto",
+                    borderRadius: "50%",
+                    background: "#2b2b2b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i className="bi bi-download" style={{fontSize: "36px"}}></i>
+                </div>
                 <h2
                   id="msg"
                   className="mt-3"
@@ -278,29 +392,30 @@ function App() {
               </ul>
 
               {selectedVideos.length > 0 && (
-                <>
+                <div className="hero-ctas downloads-row">
                   <button
-                    className="btn btn-primary mt-3"
+                    className="button-download btn-primary"
                     onClick={handleDownloadZip}
                   >
-                    Baixar Todos
+                    Baixar Todos os {downloadType === "audio" ? "Áudios" : "Vídeos"}
                   </button>
+
                   {downloadType === "audio" ? (
                     <button
-                      className="btn btn-secondary mt-3 ms-3"
+                      className="button-download btn-secondary"
                       onClick={handleDownloadZip}
                     >
                       Baixar ZIP com Músicas
                     </button>
                   ) : (
                     <button
-                      className="btn btn-secondary mt-3 ms-3"
+                      className="button-download btn-secondary"
                       onClick={() => downloadVideosZip(selectedVideos)}
                     >
                       Baixar ZIP com Vídeos
                     </button>
                   )}
-                </>
+                </div>
               )}
             </>
           ) : (
@@ -314,9 +429,9 @@ function App() {
                 value={downloadUrls}
                 onChange={(e) => setDownloadUrls(e.target.value)}
               ></textarea>
-              <div className="d-flex justify-content-center">
+              <div className="hero-ctas">
                 <button
-                  className="btn btn-primary btn-sm mt-3"
+                  className="button-download btn-primary mt-3 justify-content-center"
                   onClick={downloadFromUrls}
                   style={{ minWidth: 350 }}
                 >

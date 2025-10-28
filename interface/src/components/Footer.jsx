@@ -5,7 +5,7 @@ export default function Footer() {
 		<footer className="yt-footer mt-5">
 			<div className="yt-footer__inner">
 				<div className="yt-footer__cols">
-					<div className="col col--brand">
+					<div className="col-footer col--brand">
 						<div className="brand">
 							<div className="logo-navbar" aria-hidden>
 								<i className="bi bi-download" style={{fontSize: "24px"}}></i>

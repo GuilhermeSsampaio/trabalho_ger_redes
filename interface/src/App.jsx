@@ -163,7 +163,7 @@ function App() {
       <Hero />
       <TutorialCard />
 
-      <div className="tutorial-title-wrap">
+      <div id="download" className="tutorial-title-wrap">
         <h1 className="tutorial-title">
           Baixar músicas ou vídeos do{" "}
           <span className="tutorial-title-accent">YouTube</span>

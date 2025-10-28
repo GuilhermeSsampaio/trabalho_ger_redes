@@ -18,7 +18,16 @@ const Hero = () => {
         </p>
 
         <div className="hero-ctas">
-          <button className="button btn-primary">
+          <button
+            className="button btn-primary"
+            aria-label="Começar a baixar - ir para seção de download"
+            onClick={() => {
+              const target = document.getElementById('download');
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+          >
             <span className="icon"><i className="bi bi-download font-bi-download"></i></span> Começar a Baixar
           </button>
         </div>

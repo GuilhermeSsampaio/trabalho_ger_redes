@@ -3,13 +3,22 @@ import React, { useRef } from "react";
 export default function Navbar() {
   const togglerRef = useRef(null);
 
-  const handleNavLinkClick = () => {
-    // Só fecha o menu se o toggler estiver visível (display != 'none')
+  const handleNavLinkClick = (targetId = "download") => {
+    const target = document.getElementById(targetId);
     if (
       togglerRef.current &&
       window.getComputedStyle(togglerRef.current).display !== "none"
     ) {
       togglerRef.current.click();
+      if (target) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 300);
+      }
+    } else {
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
@@ -79,7 +88,7 @@ export default function Navbar() {
               <button
                 className="btn cta-btn"
                 onClick={() => {
-                  handleNavLinkClick();
+                  handleNavLinkClick("download");
                 }}
               >
                 Começar Agora

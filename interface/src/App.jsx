@@ -22,7 +22,8 @@ function App() {
   );
   const [downloadType, setDownloadType] = useState("audio");
 
-  const { downloadVideos, downloadVideo, downloadMusic } = useAPI();
+  const { downloadVideos, downloadVideo, downloadMusic, downloadVideosZip } =
+    useAPI();
 
   // === PESQUISA NO YOUTUBE ===
   const handleSearch = async () => {
@@ -86,7 +87,7 @@ function App() {
             ? await downloadMusic(url)
             : await downloadVideo(url);
       } else {
-        result = await downloadVideos(urls, downloadType);
+        result = await downloadVideos(urls);
       }
 
       if (result.error) {
@@ -284,12 +285,21 @@ function App() {
                   >
                     Baixar Todos
                   </button>
-                  <button
-                    className="btn btn-secondary mt-3 ms-3"
-                    onClick={handleDownloadZip}
-                  >
-                    Baixar ZIP com Músicas
-                  </button>
+                  {downloadType === "audio" ? (
+                    <button
+                      className="btn btn-secondary mt-3 ms-3"
+                      onClick={handleDownloadZip}
+                    >
+                      Baixar ZIP com Músicas
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-secondary mt-3 ms-3"
+                      onClick={() => downloadVideosZip(selectedVideos)}
+                    >
+                      Baixar ZIP com Vídeos
+                    </button>
+                  )}
                 </>
               )}
             </>

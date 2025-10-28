@@ -133,3 +133,64 @@ async def download_multiple_audio(request: MultiDownloadRequest):
         error_msg = f"Erro ao processar os downloads: {str(e)}"
         logging.error(error_msg)
         raise HTTPException(status_code=400, detail=error_msg)
+
+@app.post("/download-video/")
+async def download_video(request: DownloadRequest):
+    """Rota para baixar o vídeo completo do YouTube."""
+    url = request.url
+    url = re.sub(r"&.*", "", url)  # Remove parâmetros extras da URL
+    output_dir = "./downloads"
+
+    try:
+        logging.info(f"Processando URL: {url}")
+        yt = YouTube(url)
+
+        # Baixando vídeo completo
+        logging.info("Baixando vídeo completo...")
+        stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by("resolution").desc().first()
+
+        if not stream:
+            raise ValueError(f"Não foi possível encontrar um stream para {url}")
+
+        # Baixar o arquivo
+        video_path = stream.download(output_dir)
+
+        logging.info(f"Download concluído: {video_path}")
+        return FileResponse(video_path, media_type="video/mp4", filename=os.path.basename(video_path))
+    except Exception as e:
+        error_msg = f"Erro ao baixar {url}: {str(e)}"
+        logging.error(error_msg)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+@app.post("/download-multiple-videos/")
+async def download_multiple_videos(request: MultiDownloadRequest):
+    """Rota para baixar múltiplos vídeos do YouTube e servir como ZIP."""
+    output_dir = "./downloads"
+    zip_filename = f"./downloads/{uuid.uuid4().hex}-videos.zip"
+
+    try:
+        with ZipFile(zip_filename, "w") as zipf:
+            for url in request.urls:
+                url = re.sub(r"&.*", "", url)  # Remove parâmetros extras da URL
+                logging.info(f"Processando URL: {url}")
+                yt = YouTube(url)
+
+                # Baixando vídeo completo
+                logging.info("Baixando vídeo completo...")
+                stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by("resolution").desc().first()
+
+                if not stream:
+                    raise ValueError(f"Não foi possível encontrar um stream para {url}")
+
+                # Baixar o arquivo
+                video_path = stream.download(output_dir)
+
+                # Adicionar o arquivo MP4 ao ZIP
+                zipf.write(video_path, os.path.basename(video_path))
+
+        logging.info(f"ZIP criado com sucesso: {zip_filename}")
+        return FileResponse(zip_filename, media_type="application/zip", filename="videos.zip")
+    except Exception as e:
+        error_msg = f"Erro ao processar os downloads de vídeos: {str(e)}"
+        logging.error(error_msg)
+        raise HTTPException(status_code=400, detail=error_msg)

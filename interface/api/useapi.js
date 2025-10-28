@@ -16,6 +16,21 @@ const useAPI = () => {
     }
   };
 
+  // Faz o download de um vídeo completo
+  const downloadVideo = async (videoUrl) => {
+    try {
+      const response = await fetch(`${API_URL}/download-video/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: videoUrl }),
+      });
+      if (!response.ok) throw new Error("Erro ao baixar vídeo");
+      return await response.json(); // Retorna o caminho do arquivo
+    } catch (error) {
+      return { error: true, message: error.message };
+    }
+  };
+
   // Faz o download de múltiplos vídeos e retorna o ZIP
   const downloadVideos = async (videoUrls) => {
     try {
@@ -34,6 +49,27 @@ const useAPI = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar vídeos:", error);
+    }
+  };
+
+  // Faz o download de múltiplos vídeos como um arquivo ZIP
+  const downloadVideosZip = async (videoUrls) => {
+    try {
+      const response = await fetch(`${API_URL}/download-multiple-videos/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls: videoUrls }),
+      });
+      if (!response.ok) throw new Error("Erro ao baixar vídeos em ZIP");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "videos.zip"; // Nome do arquivo ZIP
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar vídeos em ZIP:", error);
     }
   };
 
@@ -56,7 +92,9 @@ const useAPI = () => {
 
   return {
     downloadMusic,
+    downloadVideo,
     downloadVideos,
+    downloadVideosZip,
     downloadZip,
   };
 };

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import TutorialCard from "./components/TutorialCard";
 import Footer from "./components/Footer";
+import useAPI from "../api/useapi";
 
-// YouTubeAPI pode ser opcional agora, pois você pode usar só as URLs
-// fazer as requisições pra api fastapi
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY; // Substitua pela sua chave
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,56 +20,35 @@ function App() {
   const [message, setMessage] = useState(
     "Aqui serão mostrados os vídeos que você deseja baixar!"
   );
-  const [downloadType, setDownloadType] = useState("audio"); // Novo estado para tipo de download
+  const [downloadType, setDownloadType] = useState("audio");
 
-  // corrigir spinner
-  // useEffect(() => {
-  //   // Configurar listener para atualizações de progresso
-  //   const removeListener = window.api.onDownloadProgress((data) => {
-  //     if (data.status === "started") {
-  //       setIsLoading(true);
-  //     } else if (data.status === "finished") {
-  //       setIsLoading(false);
-  //     }
+  const { downloadVideos, downloadVideo, downloadMusic } = useAPI(); // usa o utilitário
 
-  //     setDownloadStatus(data.message);
-  //   });
-
-  // Limpar listener quando o componente desmontar
-  //   return () => {
-  //     removeListener();
-  //   };
-  // }, []);
-
+  // === PESQUISA NO YOUTUBE ===
   const handleSearch = async () => {
     if (!searchQuery) return;
-
     try {
       setIsLoading(true);
-
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&type=video&key=${YOUTUBE_API_KEY}`
       );
-
       const data = await response.json();
       setSearchResults(data.items || []);
       setSearchQuery("");
     } catch (error) {
       console.error("Error searching videos:", error);
-      alert("Erro ao realizar a pesquisa. Verifique a conexão.");
+      alert("Erro ao realizar a pesquisa. Verifique sua conexão.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // === ADICIONAR / REMOVER VÍDEOS ===
   const addVideo = (videoId, title) => {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-
     if (!selectedVideos.includes(videoUrl)) {
       setSelectedVideos([...selectedVideos, videoUrl]);
       setMessage("Vídeo adicionado com sucesso!");
-
-      // Adicionar à referência de elementos
       setVideoElements((prev) => ({
         ...prev,
         [videoId]: { id: videoId, title },
@@ -82,64 +60,64 @@ function App() {
 
   const removeVideo = (videoId) => {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const updatedVideos = selectedVideos.filter((url) => url !== videoUrl);
-
-    setSelectedVideos(updatedVideos);
-
-    // Remover da referência de elementos
+    setSelectedVideos(selectedVideos.filter((url) => url !== videoUrl));
     const updatedElements = { ...videoElements };
     delete updatedElements[videoId];
     setVideoElements(updatedElements);
-
     setMessage("Vídeo removido com sucesso!");
   };
 
-  // alterar pra usar api do fastapi
-  const downloadVideos = async (urls) => {
+  // === DOWNLOAD VIA BACKEND ===
+  const handleDownload = async (urls) => {
+    if (!urls || urls.length === 0) {
+      alert("Selecione pelo menos um vídeo ou insira URLs.");
+      return;
+    }
+
     setIsLoading(true);
     setDownloadStatus("Iniciando download...");
 
     try {
-      // Chamando a API do Electron para iniciar o download
-      const result = await window.api.downloadVideos({
-        urls,
-        type: downloadType,
-      }); // Passar o tipo de download
+      let result;
+      if (urls.length === 1) {
+        const url = urls[0];
+        result =
+          downloadType === "audio"
+            ? await downloadMusic(url)
+            : await downloadVideo(url);
+      } else {
+        result = await downloadVideos(urls, downloadType);
+      }
 
       if (result.error) {
         alert(`Erro: ${result.message}`);
       } else {
-        setDownloadStatus(result.message);
+        setDownloadStatus(result.message || "Download iniciado com sucesso!");
+
+        // Se vier um caminho ZIP, abre o link automaticamente
+        if (result.zip_path) {
+          window.open(result.zip_path, "_blank");
+        }
       }
     } catch (error) {
-      console.error("Error downloading videos:", error);
-      alert("Ocorreu um erro ao baixar os vídeos.");
+      console.error("Erro ao baixar vídeos:", error);
+      alert("Ocorreu um erro ao processar o download.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const downloadAll = () => {
-    if (selectedVideos.length > 0) {
-      downloadVideos(selectedVideos);
-    } else {
-      alert("Selecione pelo menos um vídeo para baixar.");
-    }
-  };
+  const downloadAll = () => handleDownload(selectedVideos);
 
   const downloadFromUrls = () => {
     const urls = downloadUrls
       .split("\n")
       .map((url) => url.trim())
       .filter((url) => url);
-
-    if (urls.length > 0) {
-      downloadVideos(urls);
-    } else {
-      alert("Por favor, insira pelo menos uma URL.");
-    }
+    handleDownload(urls);
   };
 
+  // === INTERFACE ===
   return (
     <>
       <Navbar />
@@ -155,10 +133,14 @@ function App() {
           Cole o link do vídeo e escolha o formato desejado
         </div>
       </div>
+
       <div className="container container-fluid mt-5 mb-5 center">
         <div className="card-download">
+          {/* Seleção de modo e tipo */}
           <div className="mb-4">
-            <label className="mb-1">Escolha entre pesquisar ou buscar por URLs:</label>
+            <label className="mb-1">
+              Escolha entre pesquisar ou buscar por URLs:
+            </label>
             <select
               className="form-select"
               value={activeTab}
@@ -183,6 +165,7 @@ function App() {
 
           {activeTab === "search" ? (
             <>
+              {/* Campo de busca */}
               <div className="input-group mb-4">
                 <input
                   type="text"
@@ -197,19 +180,11 @@ function App() {
                   onClick={handleSearch}
                   style={{ border: "none", height: "50px" }}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                    className="bi bi-search"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
-                  </svg>
+                  <i className="bi bi-search" />
                 </button>
               </div>
 
+              {/* Resultados da busca */}
               <div className="container">
                 <div className="row row-cols-1 row-cols-md-3 g-4">
                   {searchResults.map((item) => (
@@ -235,30 +210,12 @@ function App() {
                 </div>
               </div>
 
+              {/* Lista de vídeos selecionados */}
               <div className="empty-state text-center mt-3 mb-4">
-                <div
-                  style={{
-                    width: 96,
-                    height: 96,
-                    margin: "0 auto",
-                    borderRadius: "50%",
-                    background: "#2b2b2b",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <i className="bi bi-download" style={{fontSize: "36px"}}></i>
-                </div>
                 <h2
                   id="msg"
                   className="mt-3"
-                  style={{
-                    color: "#ffffff",
-                    fontSize: 18,
-                    fontWeight: 600,
-                    margin: "12px 0 4px",
-                  }}
+                  style={{ color: "#fff", fontSize: 18 }}
                 >
                   {message}
                 </h2>
@@ -282,18 +239,15 @@ function App() {
               </ul>
 
               {selectedVideos.length > 0 && (
-                <button
-                  id="downloadAll"
-                  className="btn btn-primary mt-3"
-                  onClick={downloadAll}
-                >
+                <button className="btn btn-primary mt-3" onClick={downloadAll}>
                   Baixar Todos
                 </button>
               )}
             </>
           ) : (
             <>
-              <h5>Inserir uma lista de urls para baixar:</h5>
+              {/* Modo de URLs */}
+              <h5>Inserir uma lista de URLs para baixar:</h5>
               <textarea
                 className="form-control mb-3"
                 rows="10"
@@ -305,20 +259,15 @@ function App() {
                 <button
                   className="btn btn-primary btn-sm mt-3"
                   onClick={downloadFromUrls}
-                  style={{
-                    border: "none",
-                    padding: "12px 12px",
-                    fontSize: "1.1rem",
-                    fontWeight: "500",
-                    minWidth: 350,
-                  }}
+                  style={{ minWidth: 350 }}
                 >
-                  Baixar Músicas
+                  Baixar {downloadType === "audio" ? "Músicas" : "Vídeos"}
                 </button>
               </div>
             </>
           )}
 
+          {/* Status do download */}
           {isLoading && (
             <div className="modal-overlay">
               <div className="loading-modal">

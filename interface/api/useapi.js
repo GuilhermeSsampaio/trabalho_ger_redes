@@ -1,6 +1,7 @@
 const useAPI = () => {
   // Por padrão, FastAPI roda na porta 8000
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  // const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL = "http://localhost:8000";
 
   // Busca vídeos no YouTube (usando a API do YouTube, não backend)
   // Mantido para interface, mas não implementado aqui

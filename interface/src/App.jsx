@@ -22,7 +22,7 @@ function App() {
   );
   const [downloadType, setDownloadType] = useState("audio");
 
-  const { downloadVideos, downloadVideo, downloadMusic } = useAPI(); // usa o utilitário
+  const { downloadVideos, downloadVideo, downloadMusic } = useAPI();
 
   // === PESQUISA NO YOUTUBE ===
   const handleSearch = async () => {
@@ -115,6 +115,44 @@ function App() {
       .map((url) => url.trim())
       .filter((url) => url);
     handleDownload(urls);
+  };
+
+  const handleDownloadZip = async () => {
+    if (selectedVideos.length === 0) {
+      alert("Nenhum vídeo selecionado para baixar.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setDownloadStatus("Criando arquivo ZIP...");
+      const response = await fetch(
+        "http://localhost:8000/download-multiple-audio/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ urls: selectedVideos }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao criar o arquivo ZIP.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "musicas.zip";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setDownloadStatus("Arquivo ZIP baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao baixar ZIP:", error);
+      alert("Erro ao baixar o arquivo ZIP.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // === INTERFACE ===
@@ -239,9 +277,20 @@ function App() {
               </ul>
 
               {selectedVideos.length > 0 && (
-                <button className="btn btn-primary mt-3" onClick={downloadAll}>
-                  Baixar Todos
-                </button>
+                <>
+                  <button
+                    className="btn btn-primary mt-3"
+                    onClick={downloadAll}
+                  >
+                    Baixar Todos
+                  </button>
+                  <button
+                    className="btn btn-secondary mt-3 ms-3"
+                    onClick={handleDownloadZip}
+                  >
+                    Baixar ZIP com Músicas
+                  </button>
+                </>
               )}
             </>
           ) : (

@@ -1,86 +1,63 @@
 const useAPI = () => {
-  // Por padrão, FastAPI roda na porta 8000
-  // const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const API_URL = "http://localhost:8000";
 
-  // Busca vídeos no YouTube (usando a API do YouTube, não backend)
-  // Mantido para interface, mas não implementado aqui
-  const searchVideos = async (query) => {
-    // Implementação opcional, pois a busca é feita direto no App.jsx
-    return [];
-  };
-
-  // Faz download de múltiplos vídeos/áudios
-  const downloadVideos = async (videoUrls, downloadType = "audio") => {
-    try {
-      const response = await fetch(`${API_URL}/download_from_urls/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ urls: videoUrls, download_type: downloadType }),
-      });
-      if (!response.ok) {
-        throw new Error("Erro ao requisitar download");
-      }
-      return await response.json();
-    } catch (error) {
-      return { error: true, message: error.message };
-    }
-  };
-
-  // Download de vídeo individual (vídeo)
-  const downloadVideo = async (videoUrl) => {
-    try {
-      const response = await fetch(`${API_URL}/download_video/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ video_url: videoUrl }),
-      });
-      if (!response.ok) throw new Error("Erro ao baixar vídeo");
-      return await response.json();
-    } catch (error) {
-      return { error: true, message: error.message };
-    }
-  };
-
-  // Download de vídeo individual (áudio)
+  // Faz o download do áudio e retorna o caminho do arquivo
   const downloadMusic = async (videoUrl) => {
     try {
-      const response = await fetch(`${API_URL}/download_music/`, {
+      const response = await fetch(`${API_URL}/download-audio/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ video_url: videoUrl }),
+        body: JSON.stringify({ url: videoUrl }),
       });
       if (!response.ok) throw new Error("Erro ao baixar áudio");
-      return await response.json();
+      return await response.json(); // Retorna o caminho do arquivo
     } catch (error) {
       return { error: true, message: error.message };
     }
   };
 
-  // Download de playlist (lista de URLs)
-  const downloadPlaylist = async (playlistUrls) => {
+  // Faz o download de múltiplos vídeos e retorna o ZIP
+  const downloadVideos = async (videoUrls) => {
     try {
-      const response = await fetch(`${API_URL}/download_playlist/`, {
+      const response = await fetch(`${API_URL}/download-multiple-audio/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playlist_urls: playlistUrls }),
+        body: JSON.stringify({ urls: videoUrls }),
       });
-      if (!response.ok) throw new Error("Erro ao baixar playlist");
-      // Se for um arquivo, pode ser necessário tratar blob
-      return await response.json();
+      if (!response.ok) throw new Error("Erro ao baixar vídeos");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "musicas.zip"; // Nome do arquivo ZIP
+      a.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      return { error: true, message: error.message };
+      console.error("Erro ao baixar vídeos:", error);
+    }
+  };
+
+  // Faz o download do arquivo ZIP gerado
+  const downloadZip = async () => {
+    try {
+      const response = await fetch(`${API_URL}/download-zip/`);
+      if (!response.ok) throw new Error("Erro ao baixar arquivo ZIP");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "musicas.zip"; // Nome do arquivo ZIP
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar arquivo ZIP:", error);
     }
   };
 
   return {
-    searchVideos,
-    downloadVideos,
-    downloadVideo,
     downloadMusic,
-    downloadPlaylist,
+    downloadVideos,
+    downloadZip,
   };
 };
 

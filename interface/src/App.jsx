@@ -108,7 +108,7 @@ function App() {
     }
   };
 
-  const downloadAll = () => handleDownload(selectedVideos);
+  // const downloadAll = () => handleDownload(selectedVideos);
 
   const downloadFromUrls = () => {
     const urls = downloadUrls
@@ -281,7 +281,7 @@ function App() {
                 <>
                   <button
                     className="btn btn-primary mt-3"
-                    onClick={downloadAll}
+                    onClick={handleDownloadZip}
                   >
                     Baixar Todos
                   </button>

@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 
-export default function Navbar() {
+export default function Navbar({ onSearchSubmit }) {
+  const [searchTerm, setSearchTerm] = React.useState("");
   const togglerRef = useRef(null);
 
   const handleNavLinkClick = (targetId = "download") => {
@@ -23,9 +24,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav
-      className="navbar navbar-expand-lg px-3"
-    >
+    <nav className="navbar navbar-expand-lg px-3">
       <div className="container-fluid">
         <div className="d-flex align-items-center gap-2">
          <div className="logo-navbar shadow-glow">
@@ -33,7 +32,6 @@ export default function Navbar() {
          </div>
          <span className="text-logo-navbar">YT Downloader</span>
         </div>
-
         <button
           className="navbar-toggler"
           type="button"
@@ -43,10 +41,8 @@ export default function Navbar() {
           aria-label="Toggle navigation"
           ref={togglerRef}
         >
-          {/* ícone customizável do toggler (substitui o SVG padrão) */}
           <i className="bi bi-list navbar-toggler-icon-custom" aria-hidden="true"></i>
         </button>
-
         <div
           className="offcanvas offcanvas-end"
           tabIndex="-1"
@@ -72,6 +68,11 @@ export default function Navbar() {
                   role="search"
                   onSubmit={(e) => {
                     e.preventDefault();
+                    if (onSearchSubmit && searchTerm.trim()) {
+                      onSearchSubmit(searchTerm.trim());
+                    }
+                    handleNavLinkClick("download");
+                    setSearchTerm("");
                   }}
                 >
                   <input
@@ -79,6 +80,8 @@ export default function Navbar() {
                     type="search"
                     placeholder="Pesquisar"
                     aria-label="Pesquisar"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                   <button type="submit" className="navbar-search-button" aria-label="Buscar">
                     <i className="bi bi-search"></i>

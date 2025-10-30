@@ -18,7 +18,6 @@ export default function Footer() {
 							A maneira mais rápida e fácil de baixar vídeos e músicas do YouTube em alta qualidade.
 						</p>
 					</div>
-
 					<div className="col">
 						<h4 className="col__title">Links Rápidos</h4>
 						<ul className="col__list">
@@ -28,7 +27,6 @@ export default function Footer() {
 							<li>FAQ</li>
 						</ul>
 					</div>
-
 					<div className="col">
 						<h4 className="col__title">Suporte</h4>
 						<ul className="col__list">
@@ -38,7 +36,6 @@ export default function Footer() {
 							<li>Contato</li>
 						</ul>
 					</div>
-
 					<div className="col">
 						<h4 className="col__title">Informações</h4>
 						<ul className="col__list col__list--info">
@@ -49,9 +46,7 @@ export default function Footer() {
 						</ul>
 					</div>
 				</div>
-
 				<hr className="yt-footer__divider" />
-
 				<div className="yt-footer__bottom">
 					<div className="bottom__left">© 2024 YT Downloader. Todos os direitos reservados.</div>
 					<div className="bottom__right">Feito com <span className="heart">❤</span> para a comunidade</div>

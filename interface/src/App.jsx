@@ -44,16 +44,20 @@ function App() {
   }, []);
 
   // === PESQUISA NO YOUTUBE ===
-  const handleSearch = async () => {
-    if (!searchQuery) return;
+  const handleSearch = async (q) => {
+    const query = q !== undefined ? q : searchQuery;
+    if (!query) return;
     try {
       setIsLoading(true);
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&type=video&key=${YOUTUBE_API_KEY}`
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          query
+        )}&type=video&key=${YOUTUBE_API_KEY}`
       );
       const data = await response.json();
       setSearchResults(data.items || []);
-      setSearchQuery("");
+      // limpa o campo principal de busca somente quando chamada a partir dele
+      if (q === undefined) setSearchQuery("");
     } catch (error) {
       console.error("Error searching videos:", error);
       alert("Erro ao realizar a pesquisa. Verifique sua conexão.");
@@ -92,10 +96,8 @@ function App() {
       alert("Selecione pelo menos um vídeo ou insira URLs.");
       return;
     }
-
     setIsLoading(true);
     setDownloadStatus("Iniciando download...");
-
     let result = null;
     try {
       if (urls.length === 1) {
@@ -128,7 +130,6 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-
     return result;
   };
 
@@ -147,7 +148,6 @@ function App() {
       alert("Nenhum vídeo selecionado para baixar.");
       return;
     }
-
     try {
       setIsLoading(true);
       setDownloadStatus("Criando arquivo ZIP...");
@@ -159,11 +159,9 @@ function App() {
           body: JSON.stringify({ urls: selectedVideos }),
         }
       );
-
       if (!response.ok) {
         throw new Error("Erro ao criar o arquivo ZIP.");
       }
-
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -216,13 +214,11 @@ function App() {
     }
   };
 
-  // === INTERFACE ===
   return (
     <>
-      <Navbar />
+      <Navbar onSearchSubmit={(q) => handleSearch(q)} />
       <Hero />
       <TutorialCard />
-
       <div id="download" className="tutorial-title-wrap">
         <h1 className="tutorial-title">
           Baixar músicas ou vídeos do{" "}
@@ -232,10 +228,8 @@ function App() {
           Cole o link do vídeo e escolha o formato desejado
         </div>
       </div>
-
       <div className="container container-fluid mt-5 mb-5 center">
         <div className="card-download">
-          {/* Seleção de modo e tipo */}
           <div className="mb-4">
             <label className="mb-1">
               Escolha entre pesquisar ou buscar por URLs:
@@ -249,7 +243,6 @@ function App() {
               <option value="urls">Baixar pelas URLs</option>
             </select>
           </div>
-
           <div className="mb-4">
             <label className="mb-1">Escolha o tipo de download:</label>
             <select
@@ -261,10 +254,8 @@ function App() {
               <option value="video">Vídeo Completo</option>
             </select>
           </div>
-
           {activeTab === "search" ? (
             <>
-              {/* Campo de busca */}
               <div className="input-group mb-4">
                 <input
                   type="text"
@@ -282,8 +273,6 @@ function App() {
                   <i className="bi bi-search" />
                 </button>
               </div>
-
-              {/* Resultados da busca */}
               <div className="container mb-5">
                 <div className="row row-cols-1 row-cols-md-3 g-4">
                   {searchResults.map((item) => {
@@ -308,23 +297,19 @@ function App() {
                                 <div className="duration-badge">{duration}</div>
                               )}
                             </div>
-
                             <div
                               className="card-title-yt"
                               title={item.snippet?.title}
                             >
                               {item.snippet?.title}
                             </div>
-
                             <div className="channel-row">
                               <span>{item.snippet?.channelTitle}</span>
                               <span>•</span>
-                              {/* caso queira mostrar visualizações reais, é necessário chamar outro endpoint; aqui mostramos placeholder discreto */}
                               <span>
                                 {Math.floor(Math.random() * 10) + 1}M
                               </span>
                             </div>
-
                             <div className="card-actions mt-5">
                               <button
                                 className="add-btn"
@@ -332,7 +317,6 @@ function App() {
                               >
                                 + Adicionar
                               </button>
-
                               <button
                                 className="icon-btn"
                                 title="Adicionar e baixar"
@@ -348,9 +332,8 @@ function App() {
                   })}
                 </div>
               </div>
-
               {/* Lista de vídeos selecionados */}
-              <div className="empty-state text-center mt-4 mb-4">
+              <div className="empty-state text-center mt-2 mb-4">
                 <div
                   style={{
                     width: 96,
@@ -373,7 +356,6 @@ function App() {
                   {message}
                 </h2>
               </div>
-
               <ul className="list-group mb-3">
                 {Object.values(videoElements).map((video) => (
                   <li
@@ -390,7 +372,6 @@ function App() {
                   </li>
                 ))}
               </ul>
-
               {selectedVideos.length > 0 && (
                 <div className="hero-ctas downloads-row">
                   <button
@@ -399,7 +380,6 @@ function App() {
                   >
                     Baixar Todos os {downloadType === "audio" ? "Áudios" : "Vídeos"}
                   </button>
-
                   {downloadType === "audio" ? (
                     <button
                       className="button-download btn-secondary"
@@ -440,7 +420,6 @@ function App() {
               </div>
             </>
           )}
-
           {/* Status do download */}
           {isLoading && (
             <div className="modal-overlay">
@@ -461,13 +440,11 @@ function App() {
               </div>
             </div>
           )}
-
           {!isLoading && downloadStatus && (
             <div className="alert alert-success mt-3">{downloadStatus}</div>
           )}
         </div>
       </div>
-
       <Footer />
     </>
   );

@@ -195,7 +195,10 @@ async def download_multiple_videos(request: MultiDownloadRequest):
         logging.error(error_msg)
         raise HTTPException(status_code=400, detail=error_msg)
     
+@app.get("/teste")
+def teste():
+    pass
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

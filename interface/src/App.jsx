@@ -195,10 +195,9 @@ function App() {
       if (nums.length === 1) return `${nums[0]}`;
       if (nums.length === 2)
         return `${nums[0]}:${String(nums[1]).padStart(2, "0")}`;
-      return `${nums[0]}:${String(nums[1]).padStart(2, "0")}:${String(nums[2]).padStart(
-        2,
-        "0"
-      )}`;
+      return `${nums[0]}:${String(nums[1]).padStart(2, "0")}:${String(
+        nums[2]
+      ).padStart(2, "0")}`;
     } catch {
       return "";
     }
@@ -306,21 +305,23 @@ function App() {
                             <div className="channel-row">
                               <span>{item.snippet?.channelTitle}</span>
                               <span>•</span>
-                              <span>
-                                {Math.floor(Math.random() * 10) + 1}M
-                              </span>
+                              <span>{Math.floor(Math.random() * 10) + 1}M</span>
                             </div>
                             <div className="card-actions mt-5">
                               <button
                                 className="add-btn"
-                                onClick={() => addVideo(videoId, item.snippet?.title)}
+                                onClick={() =>
+                                  addVideo(videoId, item.snippet?.title)
+                                }
                               >
                                 + Adicionar
                               </button>
                               <button
                                 className="icon-btn"
                                 title="Adicionar e baixar"
-                                onClick={() => addAndDownload(videoId, item.snippet?.title)}
+                                onClick={() =>
+                                  addAndDownload(videoId, item.snippet?.title)
+                                }
                               >
                                 <i className="bi bi-download" />
                               </button>
@@ -346,7 +347,10 @@ function App() {
                     justifyContent: "center",
                   }}
                 >
-                  <i className="bi bi-download" style={{fontSize: "36px"}}></i>
+                  <i
+                    className="bi bi-download"
+                    style={{ fontSize: "36px" }}
+                  ></i>
                 </div>
                 <h2
                   id="msg"
@@ -378,7 +382,8 @@ function App() {
                     className="button-download btn-primary"
                     onClick={handleDownloadZip}
                   >
-                    Baixar Todos os {downloadType === "audio" ? "Áudios" : "Vídeos"}
+                    Baixar Todos os{" "}
+                    {downloadType === "audio" ? "Áudios" : "Vídeos"}
                   </button>
                   {downloadType === "audio" ? (
                     <button

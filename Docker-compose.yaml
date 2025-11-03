@@ -28,4 +28,4 @@ services:
       - VITE_YOUTUBE_API_KEY=${VITE_YOUTUBE_API_KEY}
     working_dir: /app
     command: npm run dev -- --host
-    restart: on-failure
+    restart: always

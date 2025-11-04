@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 import os
 import logging
+import asyncio
 from utils.utils import (
     DownloadRequest,
     ensure_output_dir,
     download_single_item,
     create_zip_from_files
 )
+from utils.websocket_manager import websocket_manager
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -55,6 +57,11 @@ async def download_content(request: DownloadRequest):
             media_type = "audio/mp3" if request.download_type == "audio" else "video/mp4"
             filename = os.path.basename(file_path)
             
+            # Notificar WebSocket sobre download completo
+            await websocket_manager.notify_download_complete(
+                file_path, request.download_type, is_zip=False
+            )
+            
             return FileResponse(
                 file_path, 
                 media_type=media_type, 
@@ -72,6 +79,11 @@ async def download_content(request: DownloadRequest):
                     os.remove(file_path)
                 except Exception as e:
                     logging.warning(f"Não foi possível remover arquivo {file_path}: {e}")
+            
+            # Notificar WebSocket sobre download completo do ZIP
+            await websocket_manager.notify_download_complete(
+                zip_path, request.download_type, is_zip=True
+            )
             
             return FileResponse(
                 zip_path, 

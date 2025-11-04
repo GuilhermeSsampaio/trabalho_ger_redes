@@ -4,14 +4,13 @@ import logging
 import os
 from typing import Set
 from fastapi import WebSocket, WebSocketDisconnect
-from threading import Timer
 
 logger = logging.getLogger(__name__)
 
 class WebSocketManager:
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
-        self.cleanup_timers = {}
+        self.cleanup_tasks = {}  # Mudança de timers para tasks async
 
     async def connect(self, websocket: WebSocket):
         """Aceita uma nova conexão WebSocket."""
@@ -62,38 +61,41 @@ class WebSocketManager:
         await self.send_message(message)
         
         # Agendar remoção automática do arquivo após 30 segundos
-        self.schedule_file_cleanup(file_path, delay=30)
+        await self.schedule_file_cleanup(file_path, delay=30)
 
-    def schedule_file_cleanup(self, file_path: str, delay: int = 30):
+    async def schedule_file_cleanup(self, file_path: str, delay: int = 30):
         """Agenda a remoção de um arquivo após um tempo determinado."""
-        def cleanup():
+        
+        async def cleanup_task():
             try:
+                # Aguardar o delay
+                await asyncio.sleep(delay)
+                
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     logger.info(f"Arquivo removido automaticamente: {file_path}")
                     
                     # Notificar via WebSocket que o arquivo foi removido
-                    asyncio.create_task(self.send_message({
+                    await self.send_message({
                         "type": "file_cleaned",
                         "file_path": file_path,
                         "timestamp": asyncio.get_event_loop().time()
-                    }))
+                    })
                 
-                # Remover timer da lista
-                if file_path in self.cleanup_timers:
-                    del self.cleanup_timers[file_path]
+                # Remover task da lista
+                if file_path in self.cleanup_tasks:
+                    del self.cleanup_tasks[file_path]
                     
             except Exception as e:
                 logger.error(f"Erro ao remover arquivo {file_path}: {e}")
 
-        # Cancelar timer existente se houver
-        if file_path in self.cleanup_timers:
-            self.cleanup_timers[file_path].cancel()
+        # Cancelar task existente se houver
+        if file_path in self.cleanup_tasks:
+            self.cleanup_tasks[file_path].cancel()
 
-        # Criar novo timer
-        timer = Timer(delay, cleanup)
-        timer.start()
-        self.cleanup_timers[file_path] = timer
+        # Criar nova task
+        task = asyncio.create_task(cleanup_task())
+        self.cleanup_tasks[file_path] = task
         
         logger.info(f"Agendada remoção do arquivo {file_path} em {delay} segundos")
 
@@ -110,11 +112,12 @@ class WebSocketManager:
             
         await self.send_message(notification)
 
-    def cleanup_all_timers(self):
-        """Cancela todos os timers de limpeza."""
-        for timer in self.cleanup_timers.values():
-            timer.cancel()
-        self.cleanup_timers.clear()
+    def cleanup_all_tasks(self):
+        """Cancela todas as tasks de limpeza."""
+        for task in self.cleanup_tasks.values():
+            if not task.done():
+                task.cancel()
+        self.cleanup_tasks.clear()
 
 # Instância global do gerenciador
 websocket_manager = WebSocketManager()

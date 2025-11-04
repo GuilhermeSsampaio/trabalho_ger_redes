@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import useAPI from "../../api/useAPI";
+import useAPI from "../../api/useapi.js";
+import useWebSocket from "./useWebSocket";
 import { ENDPOINTS, UI_CONFIG, MESSAGES } from "../config/constants";
 
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
@@ -31,12 +32,53 @@ const useDownloadManager = () => {
     }, duration);
   }, []);
 
+  // Hook WebSocket (após showStatus estar definido)
+  const { isConnected, lastMessage, sendMessage } = useWebSocket();
+
   // Cleanup ao desmontar
   useEffect(() => {
     return () => {
       if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
     };
   }, []);
+
+  // Escutar mensagens do WebSocket
+  useEffect(() => {
+    if (lastMessage) {
+      switch (lastMessage.type) {
+        case "download_complete":
+          console.log("Download concluído via WebSocket:", lastMessage);
+          showStatus(
+            `Download concluído: ${lastMessage.filename}. Arquivo será removido automaticamente em 30s.`,
+            8000
+          );
+          break;
+
+        case "file_cleaned":
+          console.log("Arquivo removido via WebSocket:", lastMessage);
+          showStatus("Arquivo removido automaticamente do servidor.", 3000);
+          break;
+
+        case "download_progress":
+          setDownloadStatus(lastMessage.message);
+          break;
+
+        default:
+          console.log("Mensagem WebSocket não tratada:", lastMessage);
+      }
+    }
+  }, [lastMessage, showStatus]);
+
+  // Enviar ping periodicamente para manter conexão
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isConnected) {
+        sendMessage({ type: "ping" });
+      }
+    }, 30000); // Ping a cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, [isConnected, sendMessage]);
 
   // === PESQUISA NO YOUTUBE ===
   const handleSearch = useCallback(

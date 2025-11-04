@@ -44,7 +44,7 @@
 
 ## 🛠️ Tarefas Técnicas
 
-- [ ] Corrigir hot reload do frontend no Docker (Vite + usePolling)
+- [x] Corrigir hot reload do frontend no Docker (Vite + usePolling)
 - [ ] Finalizar rotas de múltiplos downloads (áudio e vídeo ZIP)
 - [ ] Implementar WebSocket para feedback de progresso (opcional)
 - [ ] Testar suporte a IPv6 no backend

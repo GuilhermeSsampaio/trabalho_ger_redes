@@ -4,8 +4,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import TutorialCard from "./components/TutorialCard";
 import Footer from "./components/Footer";
-import useAPI from "../api/useapi";
-
+import useAPI from "../api/useAPI";
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 function App() {
@@ -22,8 +21,7 @@ function App() {
   );
   const [downloadType, setDownloadType] = useState("audio");
 
-  const { downloadVideos, downloadVideo, downloadMusic, downloadVideosZip } =
-    useAPI();
+  const { downloadContent } = useAPI();
 
   const statusTimeoutRef = useRef(null);
 
@@ -91,49 +89,43 @@ function App() {
   };
 
   // === DOWNLOAD VIA BACKEND ===
-  const handleDownload = async (urls) => {
+  const handleDownload = async (urls, outputFormat = "zip") => {
     if (!urls || urls.length === 0) {
       alert("Selecione pelo menos um vídeo ou insira URLs.");
       return;
     }
+
     setIsLoading(true);
     setDownloadStatus("Iniciando download...");
-    let result = null;
+
     try {
-      if (urls.length === 1) {
-        const url = urls[0];
-        result =
-          downloadType === "audio"
-            ? await downloadMusic(url)
-            : await downloadVideo(url);
-      } else {
-        result = await downloadVideos(urls);
-      }
+      // Determinar formato de saída baseado na quantidade de URLs
+      const format =
+        urls.length === 1 && outputFormat === "single" ? "single" : "zip";
+
+      const result = await downloadContent(urls, downloadType, format);
 
       if (result?.error) {
         alert(`Erro: ${result.message}`);
         showStatus(result.message || "Erro no download.", 5000);
       } else {
-        // mostra mensagem final por alguns segundos
-        showStatus(result?.message || "Download iniciado com sucesso!", 5000);
-
-        // Se vier um caminho ZIP, abre o link automaticamente
-        if (result?.zip_path) {
-          window.open(result.zip_path, "_blank");
-        }
+        showStatus(result?.message || "Download concluído com sucesso!", 5000);
       }
+
+      return result;
     } catch (error) {
       console.error("Erro ao baixar vídeos:", error);
       alert("Ocorreu um erro ao processar o download.");
-      result = { error: true, message: error.message || "Erro desconhecido" };
-      showStatus(result.message, 5000);
+      const errorResult = {
+        error: true,
+        message: error.message || "Erro desconhecido",
+      };
+      showStatus(errorResult.message, 5000);
+      return errorResult;
     } finally {
       setIsLoading(false);
     }
-    return result;
   };
-
-  // const downloadAll = () => handleDownload(selectedVideos);
 
   const downloadFromUrls = () => {
     const urls = downloadUrls
@@ -143,41 +135,12 @@ function App() {
     handleDownload(urls);
   };
 
-  const handleDownloadZip = async () => {
+  const handleDownloadZip = () => {
     if (selectedVideos.length === 0) {
       alert("Nenhum vídeo selecionado para baixar.");
       return;
     }
-    try {
-      setIsLoading(true);
-      setDownloadStatus("Criando arquivo ZIP...");
-      const response = await fetch(
-        "http://localhost:8000/download-multiple-audio/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ urls: selectedVideos }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Erro ao criar o arquivo ZIP.");
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "musicas.zip";
-      a.click();
-      window.URL.revokeObjectURL(url);
-      // usar showStatus para sumir depois de alguns segundos
-      showStatus("Arquivo ZIP baixado com sucesso!", 5000);
-    } catch (error) {
-      console.error("Erro ao baixar ZIP:", error);
-      alert("Erro ao baixar o arquivo ZIP.");
-      showStatus("Erro ao baixar o arquivo ZIP.", 5000);
-    } finally {
-      setIsLoading(false);
-    }
+    handleDownload(selectedVideos, "zip");
   };
 
   // utilitário simples para converter duração ISO (se vier) para algo legível
@@ -207,7 +170,7 @@ function App() {
   const addAndDownload = async (videoId, title) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     addVideo(videoId, title);
-    const res = await handleDownload([url]);
+    const res = await handleDownload([url], "single");
     if (res && !res.error) {
       showStatus("Download executado com sucesso e finalizado!", 5000);
     }
@@ -382,24 +345,10 @@ function App() {
                     className="button-download btn-primary"
                     onClick={handleDownloadZip}
                   >
-                    Baixar Todos os{" "}
+                    Baixar {selectedVideos.length > 1 ? "Todos os" : ""}{" "}
                     {downloadType === "audio" ? "Áudios" : "Vídeos"}
+                    {selectedVideos.length > 1 ? " (ZIP)" : ""}
                   </button>
-                  {downloadType === "audio" ? (
-                    <button
-                      className="button-download btn-secondary"
-                      onClick={handleDownloadZip}
-                    >
-                      Baixar ZIP com Músicas
-                    </button>
-                  ) : (
-                    <button
-                      className="button-download btn-secondary"
-                      onClick={() => downloadVideosZip(selectedVideos)}
-                    >
-                      Baixar ZIP com Vídeos
-                    </button>
-                  )}
                 </div>
               )}
             </>

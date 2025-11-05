@@ -23,7 +23,6 @@
 - [ ] Demonstrar código (visão rápida)
 - [ ] Apresentar diagrama de organização do backend
 - [ ] Mostrar uso de sockets/websockets (se implementado)
-- [ ] Garantir suporte a IPv6 -> usar no lista de urls
 
 ### 3. Front-end (3,0 pts)
 

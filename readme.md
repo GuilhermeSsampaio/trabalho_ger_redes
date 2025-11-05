@@ -2,10 +2,18 @@
 
 Este projeto é uma aplicação fullstack para baixar músicas e vídeos do YouTube, com backend em FastAPI (Python) e frontend em React (Vite). Oferece uma interface moderna para pesquisar vídeos, selecionar múltiplos links ou inserir URLs manualmente para download em MP3 ou MP4.
 
+## 🎯 Demonstração
+
+- **Interface Responsiva**: Design moderno e intuitivo
+- **Pesquisa Integrada**: Busque vídeos diretamente na aplicação
+- **Download Flexível**: Escolha entre áudio (MP3) ou vídeo (MP4)
+- **Feedback em Tempo Real**: Acompanhe o progresso via WebSocket
+
 ## ✨ Funcionalidades
 
 - 🔍 **Pesquisa integrada**: Busca de vídeos usando a API do YouTube
 - 🎵 **Download de áudio**: Conversão automática para MP3 com MoviePy
+- 🎬 **Download de vídeo**: Baixe vídeos diretamente do Yt
 - 📦 **Download em lote**: Múltiplos arquivos compactados em ZIP
 - 🌐 **WebSocket em tempo real**: Feedback de progresso e notificações
 - 📱 **Interface responsiva**: Design moderno com Bootstrap
@@ -52,8 +60,8 @@ Este projeto é uma aplicação fullstack para baixar músicas e vídeos do YouT
 1. **Clone o repositório**:
 
 ```bash
-git clone <repository-url>
-cd ger_redes_yt_dowloader
+git clone https://github.com/GuilhermeSsampaio/trabalho_ger_redes.git
+cd trabalho_ger_redes
 ```
 
 2. **Configure as variáveis de ambiente**:
@@ -118,6 +126,9 @@ Crie um arquivo `.env` na raiz do projeto:
 # Chave da API do YouTube (obrigatória para pesquisas)
 VITE_YOUTUBE_API_KEY=your_youtube_api_key_here
 
+# Configurações opcionais
+VITE_USE_IPV6=false
+VITE_DEV_MODE=true
 ```
 
 ### Como obter a YouTube API Key
@@ -251,8 +262,10 @@ npm run start_app    # Executar containers existentes
 
 1. **Erro de CORS**: Verifique se o backend está rodando na porta 8000
 2. **API Key inválida**: Configure corretamente a `VITE_YOUTUBE_API_KEY`
-3. **Hot reload não funciona**: Use `usePolling: true` no Vite config
-4. **Download falha**: Verifique se a URL do YouTube é válida
+3. **Hot reload não funciona**: Use `usePolling: true` no Vite config (já configurado)
+4. **Download falha**: Verifique se a URL do YouTube é válida e acessível
+5. **Porta ocupada**: Certifique-se de que as portas 8000 e 5173 estão livres
+6. **Problemas de permissão**: Execute o Docker como administrador se necessário
 
 ### Logs
 
@@ -296,62 +309,3 @@ Se você encontrar algum problema ou tiver dúvidas:
 ---
 
 ⭐ Deixe uma estrela se este projeto foi útil para você!
-
-### Download
-
-- `POST /download/` - Download unificado
-  - Body: `{urls: string[], download_type: "audio"|"video", output_format: "single"|"zip"}`
-  - Response: Arquivo direto ou JSON com informações
-
-### Health Check
-
-- `GET /health` - Status da API
-- `GET /` - Status básico
-
-### WebSocket
-
-- `WS /ws` - Conexão em tempo real
-  - Eventos: `download_complete`, `download_progress`, `file_cleaned`
-
-## 🧪 Desenvolvimento
-
-### Scripts Disponíveis
-
-```bash
-# Frontend
-npm run dev          # Servidor de desenvolvimento
-npm run build        # Build para produção
-npm run preview      # Preview da build
-
-# Docker
-npm run build_app    # Construir e executar containers
-npm run start_app    # Executar containers existentes
-```
-
-### Estrutura de Componentes
-
-- `App.jsx` - Componente principal
-- `DownloadSection.jsx` - Seção principal de downloads
-- `SearchSection.jsx` - Interface de pesquisa
-- `VideoList.jsx` - Lista de vídeos selecionados
-- `useDownloadManager.js` - Hook customizado para lógica de negócio
-
-## 🐛 Solução de Problemas
-
-### Problemas Comuns
-
-1. **Erro de CORS**: Verifique se o backend está rodando na porta 8000
-2. **API Key inválida**: Configure corretamente a `VITE_YOUTUBE_API_KEY`
-3. **Hot reload não funciona**: Use `usePolling: true` no Vite config
-4. **Download falha**: Verifique se a URL do YouTube é válida
-
-### Logs
-
-```bash
-# Ver logs dos containers
-docker-compose logs backend
-docker-compose logs frontend
-
-# Logs em tempo real
-docker-compose logs -f
-```

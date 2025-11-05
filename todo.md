@@ -46,7 +46,7 @@
 - [x] Corrigir hot reload do frontend no Docker (Vite + usePolling)
 - [x] Finalizar rotas de múltiplos downloads (áudio e vídeo ZIP)
 - [x] Implementar WebSocket para feedback de progresso (opcional)
-- [ ] Testar suporte a IPv6 no backend
+- [x] Testar suporte a IPv6 no backend
 - [x] Revisar e limpar código não utilizado
 - [x] Testar integração completa (frontend <-> backend)
 - [ ] Preparar slides e diagramas

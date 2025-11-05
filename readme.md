@@ -1,49 +1,106 @@
 # Gerenciador de Downloads do YouTube
 
-Este projeto é uma aplicação fullstack para baixar músicas e vídeos do YouTube, com backend em FastAPI (Python) e frontend em React (Vite). Permite pesquisar vídeos, selecionar múltiplos links ou inserir URLs manualmente para baixar áudio (MP3) ou vídeo (MP4).
+Este projeto é uma aplicação fullstack para baixar músicas e vídeos do YouTube, com backend em FastAPI (Python) e frontend em React (Vite). Oferece uma interface moderna para pesquisar vídeos, selecionar múltiplos links ou inserir URLs manualmente para download em MP3 ou MP4.
 
-## Funcionalidades
+## ✨ Funcionalidades
 
-- Pesquisa de vídeos do YouTube (via API do YouTube)
-- Download de áudio (MP3) ou vídeo (MP4) de um ou vários links
-- Download de playlists (lista de URLs)
-- Interface moderna e responsiva
-- Backend preparado para rodar em Docker
+- 🔍 **Pesquisa integrada**: Busca de vídeos usando a API do YouTube
+- 🎵 **Download de áudio**: Conversão automática para MP3 com MoviePy
+- 📦 **Download em lote**: Múltiplos arquivos compactados em ZIP
+- 🌐 **WebSocket em tempo real**: Feedback de progresso e notificações
+- 📱 **Interface responsiva**: Design moderno com Bootstrap
+- 🔄 **Hot reload**: Desenvolvimento otimizado com Docker
+- 🌍 **Suporte IPv6**: Configuração dual-stack opcional
 
-## Estrutura do Projeto
+## 📁 Estrutura do Projeto
 
 ```
-├── backend/           # FastAPI, scripts de download, rotas
-├── interface/         # Frontend React (Vite)
-├── frontend_antigo/   # Versão antiga do frontend (opcional)
-├── Docker-compose.yaml
-├── tarefas.md         # Lista de tarefas e ideias
-└── readme.md
+├── backend/                    # FastAPI Backend
+│   ├── main.py                # Aplicação principal e WebSocket
+│   ├── requirements.txt       # Dependências Python
+│   ├── Dockerfile            # Container do backend
+│   ├── routes/
+│   │   └── download_routes.py # Rotas de download unificadas
+│   └── utils/
+│       ├── utils.py          # Funções de download e validação
+│       └── websocket_manager.py # Gerenciador WebSocket
+├── interface/                 # Frontend React
+│   ├── src/
+│   │   ├── App.jsx           # Componente principal
+│   │   ├── components/       # Componentes React
+│   │   ├── hooks/           # Custom hooks (useDownloadManager)
+│   │   ├── config/          # Constantes e configurações
+│   │   └── api/             # Cliente API (useapi.js)
+│   ├── package.json         # Dependências Node.js
+│   └── Dockerfile          # Container do frontend
+├── Docker-compose.yaml      # Orquestração de containers
+├── Docker-compose-ipv6.yaml # Configuração com IPv6
+└── .env.example            # Exemplo de variáveis de ambiente
 ```
 
-## Como rodar localmente
+## 🚀 Como Executar
 
 ### Pré-requisitos
 
-- Python 3.10+
-- Node.js 18+
-- Docker (opcional)
+- **Python 3.12+**
+- **Node.js 20+**
+- **Docker e Docker Compose** (recomendado)
+- **Chave API do YouTube** (para pesquisas)
 
-### Backend (FastAPI)
+### 🐳 Executar com Docker (Recomendado)
+
+1. **Clone o repositório**:
+
+```bash
+git clone <repository-url>
+cd ger_redes_yt_dowloader
+```
+
+2. **Configure as variáveis de ambiente**:
+
+```bash
+cp .env.example .env
+# Edite o arquivo .env e adicione sua YOUTUBE_API_KEY
+```
+
+3. **Execute com Docker Compose**:
+
+```bash
+# Construir e executar para ipv4 no backend
+docker compose up --build
+
+# Para usar ipv6
+docker compose -f ./Docker-compose-ipv6.yaml up --build
+
+# Apenas executar (após primeira build)
+docker compose up
+```
+
+4. **Acesse a aplicação**:
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Documentação da API: http://localhost:8000/docs
+
+### 💻 Executar Localmente
+
+#### Backend (FastAPI)
 
 ```bash
 cd backend
 python -m venv venv
-# Ative o ambiente virtual:
-# Windows:
+
+# Windows
 venv\Scripts\activate
-# Linux/Mac:
+
+# Linux/macOS
 source venv/bin/activate
+
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend (React)
+#### Frontend (React + Vite)
 
 ```bash
 cd interface
@@ -51,40 +108,250 @@ npm install
 npm run dev
 ```
 
-Acesse o frontend em: http://localhost:5173
+## ⚙️ Configuração
 
-> **Obs:** O backend roda por padrão em http://localhost:8000. Configure a variável `VITE_API_URL` no `.env` do frontend se necessário.
+### Variáveis de Ambiente
 
-### Docker Compose
-
-Para rodar tudo com Docker Compose:
+Crie um arquivo `.env` na raiz do projeto:
 
 ```bash
-docker-compose up --build
+# Chave da API do YouTube (obrigatória para pesquisas)
+VITE_YOUTUBE_API_KEY=your_youtube_api_key_here
+
 ```
 
-## Variáveis de Ambiente
+### Como obter a YouTube API Key
 
-- `VITE_API_URL` (frontend): URL da API FastAPI
-- `VITE_YOUTUBE_API_KEY` (frontend): Chave da API do YouTube para buscas
+1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um novo projeto ou selecione um existente
+3. Ative a **YouTube Data API v3**
+4. Crie credenciais (API Key)
+5. Configure as restrições se necessário
 
-## Estrutura das Pastas
+### Suporte IPv6
 
-- `backend/routes/`: Rotas FastAPI
-- `backend/scripts/`: Scripts de download (pytubefix, moviepy)
-- `interface/src/`: Código React
-- `interface/api/useapi.js`: Utilitário para consumir a API FastAPI
+Para habilitar IPv6, use o arquivo de composição específico:
 
-## Tecnologias
+```bash
+docker-compose -f Docker-compose-ipv6.yaml up --build
+```
 
-- **Backend:** FastAPI, pytubefix, moviepy
-- **Frontend:** React, Vite, Bootstrap
-- **Container:** Docker, Docker Compose
+## 🏗️ Arquitetura
 
-## Licença
+### Backend (FastAPI)
 
-MIT
+- **Framework**: FastAPI com suporte assíncrono
+- **Download**: pytubefix para extração de mídia do YouTube
+- **Conversão**: MoviePy para conversão MP3/MP4
+- **WebSocket**: Comunicação em tempo real para progresso
+- **Validação**: Pydantic para validação de dados
+- **Container**: Docker com Python 3.12-slim
+
+### Frontend (React + Vite)
+
+- **Framework**: React 19 com Vite
+- **UI**: Bootstrap 5 + CSS customizado
+- **Estado**: Custom hooks para gerenciamento
+- **API**: Cliente HTTP personalizado (useapi.js)
+- **WebSocket**: Integração em tempo real
+- **Container**: Docker com Node.js 20-alpine
+
+### Comunicação
+
+- **REST API**: Endpoints para download e health check
+- **WebSocket**: Notificações de progresso e conclusão
+- **CORS**: Configurado para desenvolvimento
+
+### Fluxo de Dados
+
+```
+Frontend (React)
+    ↓ HTTP Request
+Backend (FastAPI)
+    ↓ Download
+YouTube (pytubefix)
+    ↓ Conversão
+MoviePy (MP3/MP4)
+    ↓ WebSocket
+Frontend (Notificação)
+```
+
+## 🛠️ Tecnologias
+
+### Backend
+
+- **FastAPI** - Framework web assíncrono
+- **pytubefix** - Download de vídeos do YouTube
+- **MoviePy** - Processamento e conversão de mídia
+- **Pydantic** - Validação de dados
+- **WebSockets** - Comunicação em tempo real
+- **Uvicorn** - Servidor ASGI
+
+### Frontend
+
+- **React 19** - Biblioteca de interface
+- **Vite** - Build tool e dev server
+- **Bootstrap 5** - Framework CSS
+- **Bootstrap Icons** - Biblioteca de ícones
+
+### DevOps
+
+- **Docker** - Containerização
+- **Docker Compose** - Orquestração
+- **Hot Reload** - Desenvolvimento otimizado
+
+### APIs Externas
+
+- **YouTube Data API v3** - Pesquisa de vídeos
+
+## 📋 API Endpoints
+
+### Download
+
+- `POST /download/` - Download unificado
+  - Body: `{urls: string[], download_type: "audio"|"video", output_format: "single"|"zip"}`
+  - Response: Arquivo direto ou JSON com informações
+
+### Health Check
+
+- `GET /health` - Status da API
+- `GET /` - Status básico
+
+### WebSocket
+
+- `WS /ws` - Conexão em tempo real
+  - Eventos: `download_complete`, `download_progress`, `file_cleaned`
+
+## 🧪 Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# Frontend
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview da build
+
+# Docker
+npm run build_app    # Construir e executar containers
+npm run start_app    # Executar containers existentes
+```
+
+### Estrutura de Componentes
+
+- `App.jsx` - Componente principal
+- `DownloadSection.jsx` - Seção principal de downloads
+- `SearchSection.jsx` - Interface de pesquisa
+- `VideoList.jsx` - Lista de vídeos selecionados
+- `useDownloadManager.js` - Hook customizado para lógica de negócio
+
+## 🐛 Solução de Problemas
+
+### Problemas Comuns
+
+1. **Erro de CORS**: Verifique se o backend está rodando na porta 8000
+2. **API Key inválida**: Configure corretamente a `VITE_YOUTUBE_API_KEY`
+3. **Hot reload não funciona**: Use `usePolling: true` no Vite config
+4. **Download falha**: Verifique se a URL do YouTube é válida
+
+### Logs
+
+```bash
+# Ver logs dos containers
+docker-compose logs backend
+docker-compose logs frontend
+
+# Logs em tempo real
+docker-compose logs -f
+```
+
+## 📄 Licença
+
+MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+## 👥 Contribuição
+
+Contribuições são bem-vindas! Por favor:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📞 Suporte
+
+Se você encontrar algum problema ou tiver dúvidas:
+
+- Abra uma [issue](https://github.com/GuilhermeSsampaio/trabalho_ger_redes/issues)
+- Entre em contato com os desenvolvedores
 
 ---
 
-Desenvolvido por Guilherme S. Sampaio e Pedro Mota
+**Desenvolvido com ❤️ por:**
+
+- **Guilherme S. Sampaio** - Backend & DevOps
+- **Pedro Mota** - Frontend & Testes
+
+---
+
+⭐ Deixe uma estrela se este projeto foi útil para você!
+
+### Download
+
+- `POST /download/` - Download unificado
+  - Body: `{urls: string[], download_type: "audio"|"video", output_format: "single"|"zip"}`
+  - Response: Arquivo direto ou JSON com informações
+
+### Health Check
+
+- `GET /health` - Status da API
+- `GET /` - Status básico
+
+### WebSocket
+
+- `WS /ws` - Conexão em tempo real
+  - Eventos: `download_complete`, `download_progress`, `file_cleaned`
+
+## 🧪 Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# Frontend
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview da build
+
+# Docker
+npm run build_app    # Construir e executar containers
+npm run start_app    # Executar containers existentes
+```
+
+### Estrutura de Componentes
+
+- `App.jsx` - Componente principal
+- `DownloadSection.jsx` - Seção principal de downloads
+- `SearchSection.jsx` - Interface de pesquisa
+- `VideoList.jsx` - Lista de vídeos selecionados
+- `useDownloadManager.js` - Hook customizado para lógica de negócio
+
+## 🐛 Solução de Problemas
+
+### Problemas Comuns
+
+1. **Erro de CORS**: Verifique se o backend está rodando na porta 8000
+2. **API Key inválida**: Configure corretamente a `VITE_YOUTUBE_API_KEY`
+3. **Hot reload não funciona**: Use `usePolling: true` no Vite config
+4. **Download falha**: Verifique se a URL do YouTube é válida
+
+### Logs
+
+```bash
+# Ver logs dos containers
+docker-compose logs backend
+docker-compose logs frontend
+
+# Logs em tempo real
+docker-compose logs -f
+```

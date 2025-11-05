@@ -46,7 +46,7 @@ export default function Footer() {
                 </span>{" "}
                 Compatível com YouTube
               </li>
-              <li>✓ Download em HD e 4K</li>
+              {/* <li>✓ Download em HD e 4K</li> */}
               <li>✓ Conversão para MP3</li>
               <li>✓ 100% Gratuito</li>
             </ul>

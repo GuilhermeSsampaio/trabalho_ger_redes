@@ -1,0 +1,1 @@
+manter o ENV na raiz pro docker conseguir localizar

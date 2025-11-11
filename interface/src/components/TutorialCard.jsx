@@ -13,16 +13,10 @@ export default function TutorialCard() {
       </div>
       <div className="tutorial-card">
         <div className="tutorial-video-area">
-          <div className="tutorial-play-button" role="button" aria-label="Assistir tutorial">
-            <div className="tutorial-play-triangle" />
-          </div>
-          <div className="tutorial-click-text">Clique para assistir o tutorial</div>
-        </div>
-        <div className="tutorial-progress-wrap">
-          <div className="tutorial-progress-outer">
-            <div className="tutorial-progress-inner" />
-          </div>
-          <div className="tutorial-time-text">0:35 / 1:47</div>
+          <video width="100%" height="420" controls>
+            <source src="/video_tutorial_usar.mp4" type="video/mp4" />
+            Seu navegador não suporta vídeo.
+          </video>
         </div>
         <div className="tutorial-meta">
           <h3 className="tutorial-video-title">Tutorial Completo - Como Baixar Vídeos do YouTube</h3>

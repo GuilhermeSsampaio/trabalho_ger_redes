@@ -51,11 +51,11 @@ export default function Navbar({ onSearchSubmit }) {
         >
           <div className="offcanvas-header border-bottom">
             <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-              Menu
+              YT Downloader
             </h5>
             <button
               type="button"
-              className="btn-close"
+              className="btn-close btn-close-white"
               data-bs-dismiss="offcanvas"
               aria-label="Close"
             ></button>

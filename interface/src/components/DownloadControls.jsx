@@ -13,7 +13,7 @@ const DownloadControls = ({
           Escolha entre pesquisar ou buscar por URLs:
         </label>
         <select
-          className="form-select"
+          className="form-select white-arrow"
           value={activeTab}
           onChange={(e) => setActiveTab(e.target.value)}
         >
@@ -24,7 +24,7 @@ const DownloadControls = ({
       <div className="mb-4">
         <label className="mb-1">Escolha o tipo de download:</label>
         <select
-          className="form-select"
+          className="form-select white-arrow"
           value={downloadType}
           onChange={(e) => setDownloadType(e.target.value)}
         >

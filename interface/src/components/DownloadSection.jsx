@@ -18,6 +18,9 @@ const DownloadSection = () => {
     setDownloadUrls,
     isLoading,
     downloadStatus,
+    progress,
+    currentDownload,
+    totalDownloads,
     activeTab,
     setActiveTab,
     downloadType,
@@ -83,6 +86,9 @@ const DownloadSection = () => {
           <LoadingOverlay
             isLoading={isLoading}
             downloadStatus={downloadStatus}
+            progress={progress}
+            currentItem={currentDownload}
+            totalItems={totalDownloads}
           />
           <StatusAlert isLoading={isLoading} downloadStatus={downloadStatus} />
         </div>

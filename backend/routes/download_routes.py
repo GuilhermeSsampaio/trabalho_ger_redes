@@ -31,10 +31,18 @@ async def download_content(request: DownloadRequest):
         results = []
         successful_downloads = []
         failed_downloads = []
+        total_urls = len(request.urls)
         
         # Processar cada URL
-        for url in request.urls:
-            result = download_single_item(url, request.download_type, output_dir)
+        for index, url in enumerate(request.urls, start=1):
+            result = download_single_item(
+                url, 
+                request.download_type, 
+                output_dir,
+                websocket_manager=websocket_manager,
+                item_number=index,
+                total_items=total_urls
+            )
             results.append(result)
             
             if result["success"]:

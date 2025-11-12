@@ -2,6 +2,7 @@ import os
 import re
 import logging
 import uuid
+import asyncio
 from typing import List
 from zipfile import ZipFile
 from pytubefix import YouTube
@@ -43,7 +44,7 @@ def ensure_output_dir(output_dir: str = "./downloads") -> str:
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
-def download_single_item(url: str, download_type: str, output_dir: str) -> dict:
+def download_single_item(url: str, download_type: str, output_dir: str, websocket_manager=None, item_number: int = 1, total_items: int = 1) -> dict:
     """
     Baixa um único item (áudio ou vídeo) do YouTube.
     
@@ -51,6 +52,9 @@ def download_single_item(url: str, download_type: str, output_dir: str) -> dict:
         url: URL do YouTube
         download_type: 'audio' ou 'video'
         output_dir: Diretório de destino
+        websocket_manager: Gerenciador WebSocket para notificações
+        item_number: Número do item sendo processado
+        total_items: Total de itens a processar
     
     Returns:
         dict com informações do download ou erro
@@ -61,18 +65,30 @@ def download_single_item(url: str, download_type: str, output_dir: str) -> dict:
         yt = YouTube(sanitized_url)
 
         if download_type == "audio":
+            # Notificar progresso
+            if websocket_manager:
+                asyncio.create_task(websocket_manager.notify_progress(
+                    f"Processando {item_number}/{total_items} - Baixando áudio: {yt.title[:40]}..."
+                ))
+            
             stream = yt.streams.filter(only_audio=True).first()
             if not stream:
                 raise ValueError(f"Não foi possível encontrar stream de áudio para {sanitized_url}")
             
             output_file = stream.download(output_dir)
             
+            # Notificar que está convertendo
+            if websocket_manager:
+                asyncio.create_task(websocket_manager.notify_progress(
+                    f"Processando {item_number}/{total_items} - Convertendo para MP3..."
+                ))
+            
             # Converter para MP3
             mp3_path = os.path.join(
                 output_dir, os.path.splitext(os.path.basename(output_file))[0] + ".mp3"
             )
             audio_clip = mp.AudioFileClip(output_file)
-            audio_clip.write_audiofile(mp3_path)
+            audio_clip.write_audiofile(mp3_path, verbose=False, logger=None)
             audio_clip.close()
             os.remove(output_file)
             
@@ -84,6 +100,12 @@ def download_single_item(url: str, download_type: str, output_dir: str) -> dict:
             }
         
         else:  # video
+            # Notificar progresso
+            if websocket_manager:
+                asyncio.create_task(websocket_manager.notify_progress(
+                    f"Processando {item_number}/{total_items} - Baixando vídeo: {yt.title[:40]}..."
+                ))
+            
             stream = yt.streams.filter(
                 progressive=True, 
                 file_extension="mp4"

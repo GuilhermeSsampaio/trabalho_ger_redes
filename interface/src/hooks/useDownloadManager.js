@@ -17,6 +17,9 @@ const useDownloadManager = () => {
   const [downloadUrls, setDownloadUrls] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [currentDownload, setCurrentDownload] = useState(0);
+  const [totalDownloads, setTotalDownloads] = useState(0);
   const [activeTab, setActiveTab] = useState("search");
   const [downloadType, setDownloadType] = useState("audio");
 
@@ -46,21 +49,29 @@ const useDownloadManager = () => {
   useEffect(() => {
     if (lastMessage) {
       switch (lastMessage.type) {
+        case "download_progress": { // Extrair porcentagem se a mensagem contiver
+          const progressMatch = lastMessage.message?.match(/(\d+)%/);
+          if (progressMatch) {
+            setProgress(parseInt(progressMatch[1]));
+          }
+          setDownloadStatus(lastMessage.message);
+          break;
+        }
+
         case "download_complete":
           console.log("Download concluído via WebSocket:", lastMessage);
+          setProgress(100);
           showStatus(
             `Download concluído: ${lastMessage.filename}. Arquivo será removido automaticamente em 30s.`,
             8000
           );
+          setTimeout(() => setProgress(0), 1000);
           break;
 
         case "file_cleaned":
           console.log("Arquivo removido via WebSocket:", lastMessage);
           showStatus("Arquivo removido automaticamente do servidor.", 3000);
-          break;
-
-        case "download_progress":
-          setDownloadStatus(lastMessage.message);
+          setProgress(0);
           break;
 
         default:
@@ -156,7 +167,15 @@ const useDownloadManager = () => {
     }
 
     setIsLoading(true);
-    setDownloadStatus("Iniciando download...");
+    setTotalDownloads(urls.length);
+    setCurrentDownload(1);
+
+    // Mostrar contador inicial
+    if (urls.length > 1) {
+      setDownloadStatus(`Processando 1/${urls.length} - Iniciando...`);
+    } else {
+      setDownloadStatus("Iniciando download...");
+    }
 
     try {
       // Determinar formato de saída baseado na quantidade de URLs
@@ -182,6 +201,8 @@ const useDownloadManager = () => {
       return errorResult;
     } finally {
       setIsLoading(false);
+      setCurrentDownload(0);
+      setTotalDownloads(0);
     }
   };
 
@@ -222,6 +243,9 @@ const useDownloadManager = () => {
     setDownloadUrls,
     isLoading,
     downloadStatus,
+    progress,
+    currentDownload,
+    totalDownloads,
     activeTab,
     setActiveTab,
     downloadType,

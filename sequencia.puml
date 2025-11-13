@@ -1,0 +1,94 @@
+@startuml Sequence_YouTubeDownloader
+!theme amiga
+
+title Sequência de Download - YouTube Downloader
+
+actor "Usuário" as User
+participant "Interface\n(React)" as UI
+participant "useDownloadManager\n(Hook)" as Hook
+participant "WebSocket\nClient" as WS
+participant "FastAPI\nBackend" as API
+participant "WebSocket\nManager" as WSM
+participant "pytubefix\n+ MoviePy" as Engine
+participant "YouTube" as YT
+
+== Inicialização ==
+User -> UI: Acessa localhost:5173
+UI -> Hook: Carrega gerenciador
+Hook -> WS: Conecta ws://localhost:8000/ws
+WS -> WSM: accept()
+WSM -> Hook: Conexão estabelecida
+
+== Pesquisa de Vídeos ==
+User -> UI: Digite termo de busca
+UI -> Hook: searchVideos(term)
+Hook -> YT: YouTube Data API v3
+YT -> Hook: Resultados JSON
+Hook -> UI: Lista com thumbnails
+UI -> User: Exibe vídeos encontrados
+
+== Seleção e Download ==
+User -> UI: Seleciona vídeos + formato
+UI -> Hook: addToDownloadList()
+User -> UI: Clica "Iniciar Download"
+UI -> Hook: startDownload(urls, format)
+
+== Processamento Backend ==
+Hook -> API: POST /download/\n{urls, format}
+API -> Engine: Valida URLs
+Engine -> YT: Extrai informações
+YT -> Engine: Metadados do vídeo
+
+alt URLs Válidas
+    API -> WSM: notify("download_started")
+    WSM -> WS: Broadcast message
+    WS -> Hook: Atualiza estado
+    Hook -> UI: Mostra "Download iniciado"
+    
+    == Download e Conversão ==
+    loop Para cada vídeo
+        Engine -> YT: Download stream
+        YT -> Engine: Dados do vídeo
+        
+        alt Formato MP3
+            Engine -> Engine: MoviePy converte
+            API -> WSM: notify("download_progress", 50%)
+        else Formato MP4
+            API -> WSM: notify("download_progress", 75%)
+        end
+        
+        WSM -> WS: Progress update
+        WS -> Hook: Atualiza progresso
+        Hook -> UI: Barra de progresso
+    end
+    
+    == Finalização ==
+    alt Múltiplos arquivos
+        API -> Engine: create_zip_from_files()
+        Engine -> API: arquivo.zip
+    end
+    
+    API -> WSM: notify("download_complete", file_path)
+    WSM -> WS: Download completo
+    WS -> Hook: Arquivo pronto
+    Hook -> UI: Inicia download browser
+    UI -> User: Arquivo baixado
+    
+    == Limpeza Automática ==
+    WSM -> WSM: schedule_file_cleanup(30s)
+    note right: Task assíncrona
+    
+    WSM -> WSM: sleep(30)
+    WSM -> API: Remove arquivo
+    WSM -> WS: notify("file_cleaned")
+    WS -> Hook: Arquivo removido
+    
+else URLs Inválidas
+    API -> WSM: notify("download_error")
+    WSM -> WS: Erro
+    WS -> Hook: Mostra erro
+    Hook -> UI: Mensagem de erro
+    UI -> User: "URLs inválidas"
+end
+
+@enduml

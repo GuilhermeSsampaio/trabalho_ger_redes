@@ -1,0 +1,4 @@
+#ipv4
+docker compose up --build  
+#ipv6
+docker compose -f ./Docker-compose-ipv6.yaml up --build

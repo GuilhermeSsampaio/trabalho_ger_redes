@@ -1,0 +1,56 @@
+@startuml UseCase_YouTubeDownloader
+!theme amiga
+
+title Sistema de Download do YouTube - Casos de Uso
+
+left to right direction
+
+actor "Usuário" as User
+actor "YouTube API" as YT
+actor "Sistema" as Sys
+
+rectangle "Gerenciador de Downloads YouTube" {
+  usecase "Pesquisar Vídeos" as UC1
+  usecase "Inserir URLs Diretas" as UC2
+  usecase "Selecionar Vídeos" as UC3
+  usecase "Escolher Formato" as UC4
+  usecase "Iniciar Download" as UC5
+  usecase "Acompanhar Progresso" as UC6
+  usecase "Baixar Arquivo" as UC7
+  usecase "Download em Lote" as UC8
+  usecase "Conversão MP3" as UC9
+  usecase "Criar ZIP" as UC10
+  usecase "Limpeza Automática" as UC11
+}
+
+' Relacionamentos Usuário
+User --> UC1 : pesquisa termo
+User --> UC2 : cola URLs
+User --> UC3 : marca vídeos
+User --> UC4 : MP3 ou MP4
+User --> UC5 : clica download
+User --> UC6 : visualiza barra
+User --> UC7 : salva arquivo
+
+' Relacionamentos Sistema
+UC1 --> YT : consulta API
+UC5 --> UC9 : se áudio
+UC8 --> UC10 : múltiplos arquivos
+UC7 --> UC11 : agenda limpeza
+
+' Extensões e Inclusões
+UC3 ..> UC8 : <<extend>>\nvários vídeos
+UC5 ..> UC6 : <<include>>\nnotifica progresso
+UC4 ..> UC9 : <<extend>>\nse formato áudio
+
+note right of UC6
+  WebSocket em tempo real
+  Notificações: started, progress, complete
+end note
+
+note right of UC11
+  Limpeza automática em 30s
+  Gerenciada via WebSocket
+end note
+
+@enduml

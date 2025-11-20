@@ -22,19 +22,37 @@ WSM -> Hook: Conexão estabelecida
 == Pesquisa de Vídeos ==
 User -> UI: Digite termo de busca
 UI -> Hook: searchVideos(term)
-Hook -> YT: YouTube Data API v3
-YT -> Hook: Resultados JSON
-Hook -> UI: Lista com thumbnails
-UI -> User: Exibe vídeos encontrados
+Hook -> API: GET /search?term=...
+API -> YT: YouTube Data API v3
+YT -> API: Resultados JSON
+API -> Hook: Lista com thumbnails
+Hook -> UI: Exibe vídeos encontrados
+UI -> User: Mostra resultados
 
-== Seleção e Download ==
-User -> UI: Seleciona vídeos + formato
-UI -> Hook: addToDownloadList()
-User -> UI: Clica "Iniciar Download"
-UI -> Hook: startDownload(urls, format)
+== Seleção de Tipo de Mídia ==
+User -> UI: Escolhe Áudio ou Vídeo
+UI -> Hook: setMediaType("audio"|"video")
+Hook -> UI: Atualiza interface
+
+== Seleção de Conteúdo ==
+User -> UI: Clica em vídeo
+UI -> Hook: selectItem(videoData)
+
+alt Item Único
+    Hook -> Hook: Verifica lista vazia
+    UI -> Hook: startDownload([videoData], mediaType)
+    note right: Download imediato
+    
+else Múltiplos Itens
+    Hook -> Hook: addToDownloadList(videoData)
+    Hook -> UI: Atualiza contador lista
+    UI -> User: Mostra "X itens na lista"
+    User -> UI: Clica "Baixar Lista"
+    UI -> Hook: startDownload(downloadList, mediaType)
+end
 
 == Processamento Backend ==
-Hook -> API: POST /download/\n{urls, format}
+Hook -> API: POST /download/\n{urls, format: mediaType}
 API -> Engine: Valida URLs
 Engine -> YT: Extrai informações
 YT -> Engine: Metadados do vídeo
@@ -50,11 +68,14 @@ alt URLs Válidas
         Engine -> YT: Download stream
         YT -> Engine: Dados do vídeo
         
-        alt Formato MP3
-            Engine -> Engine: MoviePy converte
-            API -> WSM: notify("download_progress", 50%)
-        else Formato MP4
-            API -> WSM: notify("download_progress", 75%)
+        alt mediaType == "audio"
+            Engine -> Engine: MoviePy extrai áudio
+            Engine -> Engine: Converte para MP3
+            API -> WSM: notify("conversion_progress", 60%)
+            Engine -> Engine: Remove arquivo original
+        else mediaType == "video" 
+            note right: Mantém MP4 original
+            API -> WSM: notify("download_progress", 90%)
         end
         
         WSM -> WS: Progress update
@@ -63,9 +84,10 @@ alt URLs Válidas
     end
     
     == Finalização ==
-    alt Múltiplos arquivos
+    alt Lista com 2+ itens
         API -> Engine: create_zip_from_files()
         Engine -> API: arquivo.zip
+        note right: ZIP automático para lotes
     end
     
     API -> WSM: notify("download_complete", file_path)

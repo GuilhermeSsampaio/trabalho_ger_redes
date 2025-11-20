@@ -1,0 +1,63 @@
+@startuml Deployment_Architecture
+!theme amiga
+
+title Arquitetura de Deployment - Docker + IPv6
+
+node "Máquina do Usuário" {
+    
+    node "Docker Network" as DN {
+        
+        node "Frontend Container\n(Node.js 20-alpine)" as FC {
+            component "React App" as RA
+            component "Vite Dev Server" as VDS
+            component "Bootstrap 5 UI" as BS
+            port "5173" as P1
+        }
+        
+        node "Backend Container\n(Python 3.12-slim)" as BC {
+            component "FastAPI App" as FA
+            component "WebSocket Manager" as WSM2
+            component "pytubefix + MoviePy" as PM
+            port "8000" as P2
+        }
+        
+        database "Volume: downloads/\n(temporário)" as VOL
+    }
+}
+
+cloud "YouTube Services" {
+    interface "YouTube Data API v3" as YTAPI
+    interface "Video Streams" as YTSTREAM
+}
+
+' Conexões internas
+RA --> VDS : Hot reload
+VDS --> P1 : HTTP
+FA --> WSM2 : WebSocket
+FA --> PM : Download engine
+PM --> VOL : Arquivos temp
+FA --> P2 : HTTP/WS
+
+' Conexões externas
+P1 --> P2 : API calls\nWebSocket
+PM --> YTAPI : Pesquisa
+PM --> YTSTREAM : Download
+
+' Configurações de rede
+note top of DN
+**IPv4 (padrão):**
+docker compose up --build
+
+**IPv6 (dual-stack):**
+docker compose -f Docker-compose-ipv6.yaml up
+- Subnet: 2001:db8::/64
+- Bridge network com IPv6 enabled
+end note
+
+note bottom of VOL
+Limpeza automática:
+- Arquivos removidos em 30s
+- Notificação via WebSocket
+end note
+
+@enduml

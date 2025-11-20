@@ -7,50 +7,87 @@ left to right direction
 
 actor "Usuário" as User
 actor "YouTube API" as YT
-actor "Sistema" as Sys
+actor "Back-end" as API
 
 rectangle "Gerenciador de Downloads YouTube" {
   usecase "Pesquisar Vídeos" as UC1
   usecase "Inserir URLs Diretas" as UC2
-  usecase "Selecionar Vídeos" as UC3
-  usecase "Escolher Formato" as UC4
-  usecase "Iniciar Download" as UC5
-  usecase "Acompanhar Progresso" as UC6
-  usecase "Baixar Arquivo" as UC7
+  usecase "Escolher Tipo de Mídia" as UC3
+  usecase "Selecionar Item Individual" as UC4
+  usecase "Adicionar à Lista" as UC5
+  usecase "Download Imediato" as UC6
+  usecase "Acompanhar Progresso" as UC7
   usecase "Download em Lote" as UC8
-  usecase "Conversão MP3" as UC9
-  usecase "Criar ZIP" as UC10
+  usecase "Criar ZIP" as UC9
+  usecase "Conversão para MP3" as UC10
   usecase "Limpeza Automática" as UC11
 }
 
-' Relacionamentos Usuário
+' Relacionamentos Usuário - Entrada
 User --> UC1 : pesquisa termo
 User --> UC2 : cola URLs
-User --> UC3 : marca vídeos
-User --> UC4 : MP3 ou MP4
-User --> UC5 : clica download
-User --> UC6 : visualiza barra
-User --> UC7 : salva arquivo
+User --> UC3 : áudio ou vídeo
 
-' Relacionamentos Sistema
+' Relacionamentos Usuário - Seleção
+User --> UC4 : clica item
+User --> UC5 : adiciona lista
+User --> UC8 : confirma lote
+
+' Relacionamentos Sistema - API
 UC1 --> YT : consulta API
-UC5 --> UC9 : se áudio
-UC8 --> UC10 : múltiplos arquivos
-UC7 --> UC11 : agenda limpeza
+UC2 --> API : valida URLs
 
-' Extensões e Inclusões
-UC3 ..> UC8 : <<extend>>\nvários vídeos
-UC5 ..> UC6 : <<include>>\nnotifica progresso
-UC4 ..> UC9 : <<extend>>\nse formato áudio
+' Relacionamentos Sistema - Fluxo Principal
+UC4 --> UC6 : <<extend>>\nitem único
+UC4 --> UC5 : <<extend>>\nmúltiplos itens
+UC5 --> UC8 : <<extend>>\nlista preenchida
 
-note right of UC6
-  WebSocket em tempo real
-  Notificações: started, progress, complete
+' Relacionamentos Sistema - Download
+UC6 --> UC7 : <<include>>\nnotifica progresso
+UC8 --> UC9 : <<include>>\nempacota arquivos
+UC8 --> UC7 : <<include>>\nnotifica progresso
+
+' Relacionamentos Sistema - Processamento (só para áudio)
+UC6 --> UC10 : <<extend>>\nse tipo = áudio
+UC8 --> UC10 : <<extend>>\nse tipo = áudio
+UC6 --> UC11 : agenda limpeza
+UC9 --> UC11 : agenda limpeza
+
+note right of UC3
+  Primeira escolha do usuário:
+  - Áudio (MP3)
+  - Vídeo (MP4)
+end note
+
+note right of UC4
+  Comportamento dinâmico:
+  - 1 item: download imediato
+  - Múltiplos: adiciona à lista
+end note
+
+note right of UC8
+  Acionado quando:
+  - Lista tem 2+ itens
+  - Usuário confirma download
+  - Gera ZIP automaticamente
+end note
+
+note right of UC7
+  WebSocket em tempo real:
+  - started, progress, complete
+  - Individual ou lote
+end note
+
+note right of UC10
+  Conversão apenas para áudio:
+  - Extrai áudio do vídeo
+  - Converte para MP3
+  - Remove arquivo original
 end note
 
 note right of UC11
   Limpeza automática em 30s
-  Gerenciada via WebSocket
+  Remove arquivos temporários
 end note
 
 @enduml

@@ -62,7 +62,25 @@ def download_single_item(url: str, download_type: str, output_dir: str, websocke
     try:
         sanitized_url = sanitize_url(url)
         logging.info(f"Processando URL: {sanitized_url}")
+        
+        # Configurar ambiente para resolver problemas IPv6
+        import socket
+        import os
+        
+        # Forçar IPv4 para conexões externas se necessário
+        if os.getenv('PREFER_IPV4'):
+            logging.info("Forçando IPv4 para conexões do YouTube")
+            # Configurar família de socket para IPv4
+            original_getaddrinfo = socket.getaddrinfo
+            def ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+                return original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+            socket.getaddrinfo = ipv4_getaddrinfo
+        
+        socket.setdefaulttimeout(30)  # 30 segundos timeout para DNS/conexões
+        
+        logging.info(f"Iniciando YouTube object para: {sanitized_url}")
         yt = YouTube(sanitized_url)
+        logging.info(f"YouTube object criado com sucesso. Título: {yt.title}")
 
         if download_type == "audio":
             # Notificar progresso

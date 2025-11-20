@@ -1,7 +1,9 @@
-const useAPI = () => {
-  const API_URL = "http://localhost:8000";
+import { API_CONFIG } from "../src/config/constants.js";
 
-  console.log("useAPI function called"); // Debug log
+const useAPI = () => {
+  const API_URL = API_CONFIG.BASE_URL;
+
+  console.log("useAPI function called with URL:", API_URL); // Debug log
 
   /**
    * Função unificada para download usando a nova API
@@ -19,6 +21,8 @@ const useAPI = () => {
       urls,
       downloadType,
       outputFormat,
+      API_URL, // Debug IPv6 URL
+      useIPv6: import.meta.env.VITE_USE_IPV6,
     }); // Debug log
     try {
       // Normalizar entrada para array

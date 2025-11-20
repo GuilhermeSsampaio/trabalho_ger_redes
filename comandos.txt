@@ -1,4 +1,89 @@
-#ipv4
+# === COMANDOS BÁSICOS ===
+
+# IPv4 (padrão - mais rápido)
 docker compose up --build  
-#ipv6
+
+# IPv6 (dual-stack - experimental)
 docker compose -f ./Docker-compose-ipv6.yaml up --build
+
+# IPv6 Híbrido (RECOMENDADO - IPv6 interno + IPv4 para YouTube)
+docker compose -f ./Docker-compose-ipv6-hybrid.yaml up --build
+
+# === COMANDOS AUTOMATIZADOS ===
+
+# Windows (PowerShell/CMD)
+configure-ip.bat ipv4      # Ativa IPv4 padrão
+configure-ip.bat ipv6      # Ativa IPv6 híbrido (recomendado)
+configure-ip.bat test      # Testa conectividade de ambos
+
+# Linux/Mac (Bash)
+./configure-ip.sh ipv4     # Ativa IPv4 padrão  
+./configure-ip.sh ipv6     # Ativa IPv6 híbrido (recomendado)
+./configure-ip.sh test     # Testa conectividade de ambos
+
+# === PARANDO SERVIÇOS ===
+
+# Parar IPv4
+docker compose down
+
+# Parar IPv6
+docker compose -f ./Docker-compose-ipv6.yaml down
+docker compose -f ./Docker-compose-ipv6-hybrid.yaml down
+
+# Parar todos
+docker compose down; docker compose -f ./Docker-compose-ipv6.yaml down; docker compose -f ./Docker-compose-ipv6-hybrid.yaml down
+
+# === URLS DE ACESSO ===
+
+# Todas as versões (IPv4, IPv6 e IPv6-híbrido)
+Frontend: http://localhost:5173
+Backend API: http://localhost:8000  
+API Health: http://localhost:8000/health
+WebSocket: ws://localhost:8000/ws
+
+# Endereços internos IPv6 (apenas dentro dos containers)
+Backend IPv6 interno: 2001:db8:1::10
+Frontend IPv6 interno: 2001:db8:1::20
+Gateway IPv6: 2001:db8:1::1
+
+# === STATUS E DEBUGGING ===
+
+# Verificar containers ativos
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Verificar rede IPv6
+docker network ls
+docker network inspect ger_redes_yt_dowloader_app_network
+
+# Ver endereços IPv6 dos containers
+docker network inspect ger_redes_yt_dowloader_app_network | Select-String -Pattern "IPv6Address"
+
+# Logs detalhados
+docker logs backend_server -f    # Acompanhar logs em tempo real
+docker logs interface_app -f
+
+# Testar API
+Invoke-WebRequest -Uri "http://localhost:8000/health" -UseBasicParsing
+
+# === VERIFICAÇÕES IPv6 ===
+
+# Verificar se IPv6 está ativo nos containers
+docker exec backend_server ip -6 addr show
+
+# Verificar DNS IPv6
+docker exec backend_server nslookup google.com
+
+# Testar conectividade IPv6 interna
+docker exec backend_server ping6 -c 3 2001:db8:1::1
+
+# === TROUBLESHOOTING ===
+
+# Se IPv6 não funcionar:
+1. Verificar se IPv6 está habilitado no Windows: netsh interface ipv6 show global
+2. Reiniciar Docker Desktop
+3. Usar versão híbrida: Docker-compose-ipv6-hybrid.yaml
+
+# Se downloads estiverem lentos no IPv6:
+1. Usar versão híbrida (força IPv4 para YouTube)
+2. Verificar logs: docker logs backend_server
+3. Voltar para IPv4 se necessário: configure-ip.bat ipv4

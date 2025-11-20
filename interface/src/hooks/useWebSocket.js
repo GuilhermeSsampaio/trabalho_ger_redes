@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getWebSocketUrl } from "../config/constants.js";
 
 const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -10,10 +11,13 @@ const useWebSocket = () => {
   useEffect(() => {
     const connectWs = () => {
       try {
-        const ws = new WebSocket("ws://localhost:8000/ws");
+        const wsUrl = getWebSocketUrl();
+        console.log("Conectando WebSocket em:", wsUrl); // Debug IPv6
+
+        const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("WebSocket conectado");
+          console.log("WebSocket conectado via", wsUrl);
           setIsConnected(true);
           // Limpar timeout de reconexão se existir
           if (reconnectTimeoutRef.current) {

@@ -22,8 +22,11 @@ const useDownloadManager = () => {
   const [totalDownloads, setTotalDownloads] = useState(0);
   const [activeTab, setActiveTab] = useState("search");
   const [downloadType, setDownloadType] = useState("audio");
+  const [countdown, setCountdown] = useState(0);
+  const [isCountingDown, setIsCountingDown] = useState(false);
 
   const statusTimeoutRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
 
   // Helper para mostrar uma mensagem temporária
   const showStatus = useCallback((msg, duration = UI_CONFIG.STATUS_TIMEOUT) => {
@@ -42,6 +45,7 @@ const useDownloadManager = () => {
   useEffect(() => {
     return () => {
       if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, []);
 
@@ -61,15 +65,30 @@ const useDownloadManager = () => {
         case "download_complete":
           console.log("Download concluído via WebSocket:", lastMessage);
           setProgress(100);
+          
+          // Iniciar countdown de 30 segundos
+          setCountdown(30);
+          setIsCountingDown(true);
+          
           showStatus(
-            `Download concluído: ${lastMessage.filename}. Arquivo será removido automaticamente em 30s.`,
-            8000
+            `Download concluído: ${lastMessage.filename}`,
+            35000 // Manter mensagem por mais tempo
           );
+          
           setTimeout(() => setProgress(0), 1000);
           break;
 
         case "file_cleaned":
           console.log("Arquivo removido via WebSocket:", lastMessage);
+          
+          // Parar countdown
+          setIsCountingDown(false);
+          setCountdown(0);
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          
           showStatus("Arquivo removido automaticamente do servidor.", 3000);
           setProgress(0);
           break;
@@ -90,6 +109,31 @@ const useDownloadManager = () => {
 
     return () => clearInterval(interval);
   }, [isConnected, sendMessage]);
+
+  // Gerenciar countdown
+  useEffect(() => {
+    if (isCountingDown && countdown > 0) {
+      countdownIntervalRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            setIsCountingDown(false);
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [isCountingDown, countdown]);
 
   // === PESQUISA NO YOUTUBE ===
   const handleSearch = useCallback(
@@ -170,6 +214,14 @@ const useDownloadManager = () => {
     setTotalDownloads(urls.length);
     setCurrentDownload(1);
 
+    // Limpar countdown anterior se existir
+    setCountdown(0);
+    setIsCountingDown(false);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+
     // Mostrar contador inicial
     if (urls.length > 1) {
       setDownloadStatus(`Processando 1/${urls.length} - Iniciando...`);
@@ -184,6 +236,11 @@ const useDownloadManager = () => {
 
       const result = await downloadContent(urls, downloadType, format);
 
+      // Desativar loading ANTES de processar o resultado
+      setIsLoading(false);
+      setCurrentDownload(0);
+      setTotalDownloads(0);
+
       if (result?.error) {
         showStatus(result.message || "Erro no download.", 5000);
       } else {
@@ -193,16 +250,16 @@ const useDownloadManager = () => {
       return result;
     } catch (error) {
       console.error("Erro ao baixar vídeos:", error);
+      setIsLoading(false);
+      setCurrentDownload(0);
+      setTotalDownloads(0);
+      
       const errorResult = {
         error: true,
         message: error.message || "Erro desconhecido",
       };
       showStatus(errorResult.message, 5000);
       return errorResult;
-    } finally {
-      setIsLoading(false);
-      setCurrentDownload(0);
-      setTotalDownloads(0);
     }
   };
 
@@ -250,6 +307,8 @@ const useDownloadManager = () => {
     setActiveTab,
     downloadType,
     setDownloadType,
+    countdown,
+    isCountingDown,
 
     // Funções
     handleSearch,

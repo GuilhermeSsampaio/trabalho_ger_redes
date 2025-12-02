@@ -5,6 +5,7 @@ import URLsSection from "./URLsSection";
 import VideoList from "./VideoList";
 import LoadingOverlay from "./LoadingOverlay";
 import StatusAlert from "./StatusAlert";
+import CountdownTimer from "./CountdownTimer";
 import useDownloadManager from "../hooks/useDownloadManager";
 
 const DownloadSection = () => {
@@ -31,6 +32,8 @@ const DownloadSection = () => {
     downloadFromUrls,
     handleDownloadZip,
     addAndDownload,
+    countdown,
+    isCountingDown,
   } = useDownloadManager();
 
   return (
@@ -90,7 +93,14 @@ const DownloadSection = () => {
             currentItem={currentDownload}
             totalItems={totalDownloads}
           />
-          <StatusAlert isLoading={isLoading} downloadStatus={downloadStatus} />
+          
+          {!isLoading && (
+            <CountdownTimer seconds={countdown} isActive={isCountingDown} />
+          )}
+          
+          {!isLoading && (
+            <StatusAlert isLoading={isLoading} downloadStatus={downloadStatus} />
+          )}
         </div>
       </div>
     </>

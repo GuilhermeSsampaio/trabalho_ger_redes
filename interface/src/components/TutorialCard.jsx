@@ -13,7 +13,7 @@ export default function TutorialCard() {
       </div>
       <div className="tutorial-card">
         <div className="tutorial-video-area">
-          <video width="100%" height="420" controls>
+          <video width="100%" className="tutorial-video-altura" controls>
             <source src="/video_tutorial_usar.mp4" type="video/mp4" />
             Seu navegador não suporta vídeo.
           </video>

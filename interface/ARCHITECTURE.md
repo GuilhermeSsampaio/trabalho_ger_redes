@@ -140,11 +140,3 @@ App.jsx
 
 - Centraliza estado e lógica
 - Reutilizável entre componentes
-
-## Próximos Passos
-
-1. **Testes Unitários**: Adicionar testes para cada componente
-2. **PropTypes/TypeScript**: Adicionar validação de tipos
-3. **Context API**: Para estado global se necessário
-4. **Error Boundaries**: Para tratamento de erros
-5. **Memoização**: React.memo em componentes quando apropriado

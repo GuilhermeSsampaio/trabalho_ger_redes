@@ -2,6 +2,10 @@
 
 Este projeto é uma aplicação fullstack para baixar músicas e vídeos do YouTube, com backend em FastAPI (Python) e frontend em React (Vite). Oferece uma interface moderna para pesquisar vídeos, selecionar múltiplos links ou inserir URLs manualmente para download em MP3 ou MP4.
 
+### 📌 Observação
+
+Comandos diretos para rodar o projeto estão em `comandos.txt` (na raiz do repositório). Consulte esse arquivo para instruções rápidas sobre Docker, execução local e uso de IPv6.
+
 ## 🎯 Demonstração
 
 - **Interface Responsiva**: Design moderno e intuitivo
@@ -301,10 +305,10 @@ Se você encontrar algum problema ou tiver dúvidas:
 
 ---
 
-**Desenvolvido com ❤️ por:**
+## 👥 Equipe de Desenvolvimento
 
-- **Guilherme S. Sampaio** - Backend & DevOps
-- **Pedro Mota** - Frontend & Testes
+- **Guilherme S. Sampaio**: Backend, WebSocket, Docker e DevOps
+- **Pedro Mota**: Frontend, Interface de Usuário e Testes
 
 ---
 

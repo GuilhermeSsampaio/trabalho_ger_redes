@@ -131,7 +131,7 @@ Crie um arquivo `.env` na raiz do projeto:
 VITE_YOUTUBE_API_KEY=your_youtube_api_key_here
 
 # Configurações opcionais
-VITE_USE_IPV6=false
+VITE_USE_IPV6=true
 VITE_DEV_MODE=true
 ```
 
